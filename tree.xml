@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Family>
+
+    <Person id="P1">
+        <Name>Raman Nair</Name>
+        <Birth>1920</Birth>
+    </Person>
+
+    <Person id="P2">
+        <Name>Lakshmi Amma</Name>
+        <Birth>1925</Birth>
+    </Person>
+
+</Family>
