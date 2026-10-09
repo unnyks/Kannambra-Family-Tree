@@ -22,7 +22,7 @@ ul.t ul>li::after{content:'';position:absolute;left:-15px;top:0;bottom:0;border-
 ul.t ul>li:last-child::after{bottom:auto;height:26px}
 .r{display:flex;align-items:center;gap:4px}.tg{width:18px;text-align:center;cursor:pointer;color:var(--mut);user-select:none}
 .n{background:var(--card);border:1px solid var(--ln);border-left-width:5px;border-radius:8px;padding:4px 10px;cursor:pointer;min-width:0}
-.n.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}.n b{font-weight:600}.n span{display:block;color:var(--mut);font-size:12px}
+.n.c{color:#2b2a28}.n.c span{color:#5a554d}.n.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}.n b{font-weight:600}.n span{display:block;color:var(--mut);font-size:12px}
 .panel{background:var(--card);border:1px solid var(--ln);border-radius:10px;padding:14px}
 .panel h2{margin:0}.mut{color:var(--mut)}a.l{color:var(--acc);cursor:pointer;text-decoration:underline}
 dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:10px 0}dt{color:var(--mut);font-size:13px}dd{margin:0;white-space:pre-wrap}
@@ -55,7 +55,7 @@ function saveXml(){if(!doc)return;const a=document.createElement('a');a.href=URL
 function house(e){let c=e;while(c){const i=f(c,'Id');if(i?.getAttribute('Color'))return i.getAttribute('Color');c=par(c)}return'var(--ln)'}
 function houseName(e){let c=e;while(c){const i=f(c,'Id');if(i?.getAttribute('Name'))return i.getAttribute('Name');c=par(c)}return''}
 function card(e){const k=T(e).length,sp=v(e,'Spouse'),b=dsh('DateOfBirth',v(e,'DateOfBirth'));
-return `<div class="n ${id(e)===sel?'sel':''}" style="border-left-color:${house(e)}" onclick="pick('${id(e)}')"><b>${esc(v(e,'Name'))||'(unnamed)'}</b><span>${sp?'⚭ '+esc(sp)+' ':''}${b?'· b. '+esc(b)+' ':''}${k&&!open.has(id(e))?'· '+k+' child'+(k>1?'ren':''):''}</span></div>`}
+const h=house(e),c=h[0]==='#';return `<div class="n ${c?'c':''} ${id(e)===sel?'sel':''}" style="${c?`background:${h};`:''}border-left-color:${h}" onclick="pick('${id(e)}')"><b>${esc(v(e,'Name'))||'(unnamed)'}</b><span>${sp?'⚭ '+esc(sp)+' ':''}${b?'· b. '+esc(b)+' ':''}${k&&!open.has(id(e))?'· '+k+' child'+(k>1?'ren':''):''}</span></div>`}
 function node(e){const k=T(e),o=open.has(id(e));
 return `<li><div class="r"><b class="tg" onclick="tog('${id(e)}')">${k.length?(o?'▾':'▸'):'·'}</b>${card(e)}</div>${k.length&&o?`<ul>${k.map(node).join('')}</ul>`:''}</li>`}
 function renderTree(){if(!doc){$('tree').innerHTML='<p class="mut">Loading the family tree…</p>';return}
