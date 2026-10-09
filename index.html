@@ -12,7 +12,7 @@ h1{font-size:20px;margin:0 auto 0 0}
 button,select,input,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--ln);border-radius:6px;padding:5px 10px}
 button{cursor:pointer}button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
 main{display:flex;flex-wrap:wrap;gap:16px;padding:16px;align-items:flex-start}
-#left{flex:0 1 460px;min-width:0;overflow-x:auto}#det{flex:1 1 320px;min-width:0;position:sticky;top:120px;max-height:calc(100vh - 130px);overflow:auto}
+#left{flex:0 1 580px;min-width:0;overflow-x:auto}#det{flex:1 1 320px;min-width:0;position:sticky;top:120px;max-height:calc(100vh - 130px);overflow:auto}
 @media(max-width:760px){#left{flex-basis:100%}#det{position:static;max-height:none}}
 #q{width:100%;margin-bottom:10px}#bar{display:flex;flex-wrap:wrap;gap:6px}#bar button{color:#2b2a28;font-weight:600;border-color:transparent;padding:6px 12px}#bar button.on{outline:2px solid var(--acc);outline-offset:1px}#bar small{font-weight:400}
 ul.t{list-style:none;margin:0;padding:0}ul.t ul{list-style:none;margin:0 0 0 9px;padding-left:24px}
@@ -34,7 +34,7 @@ label{display:block;margin-top:8px;font-size:13px;color:var(--mut)}label>*{displ
 .cols::before{content:'';position:absolute;top:0;left:25%;right:25%;border-top:2px solid var(--ln)}.col{display:flex;flex-direction:column;align-items:center;min-width:0}
 .n .tg2{display:inline-block;background:var(--acc);color:#fff;border-radius:10px;padding:0 8px;font-size:11px;margin:2px 0 0 6px}
 .res{background:var(--bg);border-radius:8px;padding:8px 12px;margin:10px 0}
-.warn{color:#b3541e;font-size:13px}.sr{padding:6px 8px;border-bottom:1px solid var(--ln);cursor:pointer}
+.r{flex-wrap:wrap}.cp{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}.pp{display:inline-flex;align-items:center;gap:4px}.mar{color:var(--mut);font-style:normal}.warn{color:#b3541e;font-size:13px}.sr{padding:6px 8px;border-bottom:1px solid var(--ln);cursor:pointer}
 </style></head><body>
 <header><h1>🌳 Family Tree <span class="mut" id="cnt" style="font-size:13px"></span></h1>
 <div id="bar"></div>
@@ -55,22 +55,31 @@ const par=e=>e.parentElement&&e.parentElement.tagName==='Tree'?e.parentElement:n
 const dsh=(t,s)=>DATES.includes(t)&&/^\d{4}-\d\d-\d\d/.test(s)?s.slice(0,10):s;
 const photo=e=>{const s=v(e,'ImageFile');return s&&s.toLowerCase()!=='null'?s:''};
 function setF(e,t,val){let c=f(e,t);if(!c){c=doc.createElement(t);const k=T(e)[0];k?e.insertBefore(c,k):e.appendChild(c)}c.textContent=val}
+const isP=e=>e.tagName==='Partner',partners=e=>[...e.children].filter(c=>c.tagName==='Partner');
+const PF=['Name','NickName','Gender','DateOfBirth','DateOfDeath','DateOfMarriage','Profession','City','State','Country','ImageFile','Comments'];
+const fields=e=>isP(e)?FIELDS.filter(([t])=>PF.includes(t)):FIELDS.filter(([t])=>t!=='Spouse');
+const ctx=e=>isP(e)?'spouse of '+esc(v(par(e),'Name')):par(e)?'child of '+esc(v(par(e),'Name')):'top of tree';
+function addPartnerEl(p,name,sfx){const n=doc.createElement('Partner'),a=doc.createElement('Name'),i=doc.createElement('Id');a.textContent=name;
+i.textContent=id(p)+'-p'+(sfx||Date.now().toString(36)+Math.random().toString(36).slice(2,5));n.append(a,i);const k=T(p)[0];k?p.insertBefore(n,k):p.appendChild(n);return n}
+function syncSpouse(p){const n=partners(p).map(x=>v(x,'Name')).filter(Boolean).join(', ');if(n||f(p,'Spouse'))setF(p,'Spouse',n)}
+function convertSpouses(){doc.querySelectorAll('Tree').forEach(p=>{const t=v(p,'Spouse');if(t&&t.toLowerCase()!=='null'&&!partners(p).length)addPartnerEl(p,t,'1');
+partners(p).forEach((x,n)=>{if(!f(x,'Id')){const i=doc.createElement('Id');i.textContent=id(p)+'-p'+(n+1);x.appendChild(i)}})})}
 function load(x){const d=new DOMParser().parseFromString(x,'text/xml');if(d.querySelector('parsererror')){alert('Invalid XML');return}
-doc=d;index();if(!byId.size){$('tree').innerHTML='<p class="mut">tree.xml was loaded but contains no people. Please upload the full family tree file as tree.xml.</p>';return}const r=T(doc.documentElement);r.forEach(e=>open.add(id(e)));sel=r[0]?id(r[0]):null;edit=false;render()}
-function index(){byId=new Map();doc.querySelectorAll('Tree').forEach(e=>byId.set(id(e),e));$('cnt').textContent=byId.size+' people'}
+doc=d;convertSpouses();index();if(!byId.size){$('tree').innerHTML='<p class="mut">tree.xml was loaded but contains no people. Please upload the full family tree file as tree.xml.</p>';return}const r=T(doc.documentElement);r.forEach(e=>open.add(id(e)));sel=r[0]?id(r[0]):null;edit=false;render()}
+function index(){byId=new Map();doc.querySelectorAll('Tree,Partner').forEach(e=>byId.set(id(e),e));const a=[...byId.values()],np=a.filter(isP).length;$('cnt').textContent=(a.length-np)+' people'+(np?' · '+np+' spouses':'')}
 function saveXml(){if(!doc)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['<?xml version="1.0" encoding="utf-8"?>'+new XMLSerializer().serializeToString(doc)],{type:'text/xml'}));a.download='KFTree_Hierarchical.xml';a.click()}
 function house(e){let c=e;while(c){const i=f(c,'Id');if(i?.getAttribute('Color'))return i.getAttribute('Color');c=par(c)}return'var(--ln)'}
 function houseName(e){let c=e;while(c){const i=f(c,'Id');if(i?.getAttribute('Name'))return i.getAttribute('Name');c=par(c)}return''}
 const BAND='lr'; // 'l' left only, 'lr' left+right, 'tl' top+left, 'all' every side
 function band(h){if(h[0]!=='#')return'';return BAND==='all'?`border-width:4px;border-color:${h}`:BAND==='tl'?`border-top:6px solid ${h};border-left:6px solid ${h}`:BAND==='lr'?`border-left:8px solid ${h};border-right:8px solid ${h}`:`border-left:8px solid ${h}`}
 function card(e){const k=T(e).length,sp=v(e,'Spouse'),b=dsh('DateOfBirth',v(e,'DateOfBirth'));
-const h=house(e);return `<div class="n ${id(e)===sel?'sel':''}" style="${band(h)}" onclick="pick('${id(e)}')"><b>${esc(v(e,'Name'))||'(unnamed)'}</b><span>${sp?'⚭ '+esc(sp)+' ':''}${b?'· b. '+esc(b)+' ':''}${k&&!open.has(id(e))?'· '+k+' child'+(k>1?'ren':''):''}</span></div>`}
+const h=house(e);return `<div class="n ${id(e)===sel?'sel':''}" style="${band(h)}" onclick="pick('${id(e)}')"><b>${esc(v(e,'Name'))||'(unnamed)'}</b><span>${b?'· b. '+esc(b)+' ':''}${k&&!open.has(id(e))?'· '+k+' child'+(k>1?'ren':''):''}</span></div>`}
 function node(e){const k=T(e),o=open.has(id(e));
-return `<li><div class="r"><b class="tg" onclick="tog('${id(e)}')">${k.length?(o?'▾':'▸'):'·'}</b>${card(e)}</div>${k.length&&o?`<ul>${k.map(node).join('')}</ul>`:''}</li>`}
+return `<li><div class="r"><b class="tg" onclick="tog('${id(e)}')">${k.length?(o?'▾':'▸'):'·'}</b>${card(e)}${partners(e).map(p=>'<span class="pp"><i class="mar">⚭</i>'+card(p)+'</span>').join('')}</div>${k.length&&o?`<ul>${k.map(node).join('')}</ul>`:''}</li>`}
 function renderTree(){if(!doc){$('tree').innerHTML='<p class="mut">Loading the family tree…</p>';return}
 const s=q.trim().toLowerCase();
-if(s){const m=search(s,['Name','NickName','Spouse'],['City','Profession'],60);
-$('tree').innerHTML=m.slice(0,60).map(e=>`<div class="sr" onclick="pick('${id(e)}',1)"><b>${esc(v(e,'Name'))}</b> <span class="mut">${esc(v(e,'Spouse'))} ${esc(houseName(e))}</span></div>`).join('')||'<p class="mut">No matches.</p>';return}
+if(s){const m=search(s,['Name','NickName'],['City','Profession'],60);
+$('tree').innerHTML=m.slice(0,60).map(e=>`<div class="sr" onclick="pick('${id(e)}',1)"><b>${esc(v(e,'Name'))}</b> <span class="mut">${ctx(e)} ${esc(houseName(e))}</span></div>`).join('')||'<p class="mut">No matches.</p>';return}
 $('tree').innerHTML=`<ul class="t">${T(doc.documentElement).map(node).join('')}</ul>`}
 const bh=e=>{while(e&&!f(e,'Id')?.getAttribute('Color'))e=par(e);return e};
 function renderBar(){if(!doc){$('bar').innerHTML='';return}const cur=sel&&byId.get(sel)?bh(byId.get(sel)):null;
@@ -91,16 +100,16 @@ if(edit)return form(e,el);
 const path=[];let c=par(e);while(c){path.unshift(lk(c));c=par(c)}
 const M=media(e),hn=houseName(e);
 el.innerHTML=`<div class="panel"><div class="mut" style="font-size:13px">${path.join(' › ')}</div><h2>${esc(v(e,'Name'))}</h2>
-<div class="mut">${hn?esc(hn)+' · ':''}Branch ${esc(v(e,'Branch'))}</div>
-<dl>${FIELDS.slice(1).filter(([t])=>t!=='ImageFile'&&v(e,t)).map(([t,l])=>`<dt>${l}</dt><dd>${esc(dsh(t,v(e,t)))}</dd>`).join('')}
-<dt>Parent</dt><dd>${lk(par(e))}</dd><dt>Children</dt><dd>${T(e).map(lk).join(', ')||'—'}</dd></dl>
+<div class="mut">${hn?esc(hn)+' · ':''}${isP(e)?'Spouse of '+lk(par(e)):'Branch '+esc(v(e,'Branch'))}</div>
+<dl>${fields(e).slice(1).filter(([t])=>t!=='ImageFile'&&v(e,t)).map(([t,l])=>`<dt>${l}</dt><dd>${esc(dsh(t,v(e,t)))}</dd>`).join('')}
+${isP(e)?'':`<dt>Parent</dt><dd>${lk(par(e))}</dd><dt>Spouse</dt><dd>${partners(e).map(lk).join(', ')||'—'}</dd><dt>Children</dt><dd>${T(e).map(lk).join(', ')||'—'}</dd>`}</dl>
 ${M.map((m,i)=>`<div class="m"><div class="mut">${esc(m.caption||m.file)}</div><div id="m${i}"></div></div>`).join('')}
-<p><button onclick="openRel('${id(e)}')">🔗 How are we related?</button></p><div class="ed" style="margin-top:8px"><button onclick="edit=true;detail()">Edit</button> <button onclick="addKid()">+ Add child</button> <button onclick="del()">Delete</button></div></div>`;
+<p><button onclick="openRel('${id(e)}')">🔗 How are we related?</button></p><div class="ed" style="margin-top:8px"><button onclick="edit=true;detail()">Edit</button> ${isP(e)?'':'<button onclick="addKid()">+ Add child</button> <button onclick="addPartner()">+ Add spouse</button>'} <button onclick="del()">Delete</button></div></div>`;
 M.forEach((m,i)=>{const u=resolve(m.file),t=$('m'+i);if(!u){t.innerHTML=`<span class="warn">File not found: ${esc(m.file)} — use “Link media folder”.</span>`;return}
 if(m.type==='photo')t.innerHTML=`<img src="${u}" onerror="bad(this)">`;else if(m.type==='audio')t.innerHTML=`<audio controls onerror="bad(this)" src="${u}"></audio>`;
 else if(m.type==='video')t.innerHTML=`<video controls onerror="bad(this)" src="${u}"></video>`;else fetch(u).then(r=>r.ok?r.text():Promise.reject()).then(x=>t.innerHTML=`<pre>${esc(x)}</pre>`).catch(()=>t.innerHTML='<span class="warn">Media file not found on the site.</span>')})}
 function form(e,el){const ms=[...e.children].filter(c=>c.tagName==='Media');
-el.innerHTML=`<div class="panel"><h2>Edit</h2>${FIELDS.map(([t,l])=>t==='Gender'?`<label>${l}<select id="f_${t}">${['','M','F'].map(g=>`<option ${g===v(e,t)?'selected':''}>${g}</option>`).join('')}</select></label>`:
+el.innerHTML=`<div class="panel"><h2>Edit</h2>${fields(e).map(([t,l])=>t==='Gender'?`<label>${l}<select id="f_${t}">${['','M','F'].map(g=>`<option ${g===v(e,t)?'selected':''}>${g}</option>`).join('')}</select></label>`:
 t==='Comments'||t==='Address'?`<label>${l}<textarea id="f_${t}" rows="3">${esc(f(e,t)?.textContent||'')}</textarea></label>`:`<label>${l}<input id="f_${t}" value="${esc(dsh(t,v(e,t)))}"></label>`).join('')}
 <label>Attached media</label>${ms.map((m,i)=>`<div class="m"><select onchange="ms_(${i},'type',this.value)">${['photo','audio','video','text'].map(t=>`<option ${t===m.getAttribute('type')?'selected':''}>${t}</option>`).join('')}</select>
 <input value="${esc(m.getAttribute('file'))}" onchange="ms_(${i},'file',this.value)"><input value="${esc(m.getAttribute('caption'))}" placeholder="caption" onchange="ms_(${i},'caption',this.value)"><button onclick="rm(${i})">Remove</button></div>`).join('')}
@@ -108,16 +117,17 @@ t==='Comments'||t==='Address'?`<label>${l}<textarea id="f_${t}" rows="3">${esc(f
 <p><button class="p" onclick="save()">Done</button> <button onclick="edit=false;detail()">Cancel</button></p></div>`}
 const mel=i=>[...byId.get(sel).children].filter(c=>c.tagName==='Media')[i];
 function ms_(i,k,x){mel(i).setAttribute(k,x)}function rm(i){saveForm();mel(i).remove();detail()}
-function saveForm(){const e=byId.get(sel);FIELDS.forEach(([t])=>{let x=$('f_'+t).value;if(DATES.includes(t)&&/^\d{4}-\d\d-\d\d$/.test(x))x+='T00:00:00';if(x!==''||f(e,t))setF(e,t,x)})}
-function save(){saveForm();edit=false;index();render()}
+function saveForm(){const e=byId.get(sel);fields(e).forEach(([t])=>{let x=$('f_'+t).value;if(DATES.includes(t)&&/^\d{4}-\d\d-\d\d$/.test(x))x+='T00:00:00';if(x!==''||f(e,t))setF(e,t,x)})}
+function save(){saveForm();const e=byId.get(sel);if(isP(e))syncSpouse(par(e));edit=false;index();render()}
 function addM(inp){const fl=inp.files[0];if(!fl)return;saveForm();const e=byId.get(sel);files[fl.name.toLowerCase()]=URL.createObjectURL(fl);
 const m=doc.createElement('Media');m.setAttribute('type',fl.type.startsWith('image')?'photo':fl.type.startsWith('audio')?'audio':fl.type.startsWith('video')?'video':'text');m.setAttribute('file',fl.name);m.setAttribute('caption','');
 const k=T(e)[0];k?e.insertBefore(m,k):e.appendChild(m);detail()}
+function addPartner(){const p=byId.get(sel),n=addPartnerEl(p,'New spouse');syncSpouse(p);open.add(id(p));index();sel=id(n);edit=true;render()}
 function addKid(){const p=byId.get(sel),n=doc.createElement('Tree'),mk=(t,x)=>{const c=doc.createElement(t);c.textContent=x;n.appendChild(c)};
 mk('Branch',v(p,'Branch')+String(T(p).length+1).padStart(2,'0'));mk('Name','New person');mk('Id',crypto.randomUUID());mk('ParentId',id(p));p.appendChild(n);
 open.add(id(p));index();sel=id(n);edit=true;render()}
 function del(){const e=byId.get(sel),n=e.querySelectorAll('Tree').length+1;if(!confirm(`Delete ${v(e,'Name')}${n>1?' and '+(n-1)+' descendants':''}?`))return;
-const p=par(e);e.remove();index();sel=p?id(p):null;render()}
+const p=par(e);e.remove();if(isP(e)&&p)syncSpouse(p);index();sel=p?id(p):null;render()}
 // Similar-sounding spellings: each pair [written, treated as]. Edit this list to add your own.
 const SOUND=[['zh','l'],['sh','s'],['th','t'],['dh','d'],['bh','b'],['kh','k'],['gh','g'],['ph','p'],['ch','c'],['ck','k'],['ee','i'],['oo','u'],['aa','a'],['ai','ei'],['w','v'],['y','i']];
 const nw=w=>{w=w.toLowerCase().replace(/[^a-z]/g,'');SOUND.forEach(([a,b])=>w=w.split(a).join(b));w=w.replace(/(.)\1+/g,'$1');if(w.length>=5&&w.endsWith('an'))w=w.slice(0,-2);return w};
@@ -148,23 +158,31 @@ function relView(el){const nm=i=>i?esc(v(byId.get(i),'Name')):'';
 el.innerHTML=`<div class="panel"><h2>🔗 Relationship</h2><p class="mut" style="margin:2px 0 6px">Type two names and pick them from the list.</p>
 <label>Person A</label><input id="ra" style="width:100%" autocomplete="off" oninput="sug('a')" value="${nm(rA)}"><div id="sa"></div>
 <label>Person B</label><input id="rb" style="width:100%" autocomplete="off" oninput="sug('b')" value="${nm(rB)}"><div id="sb"></div>
-<div id="rres"></div><p class="mut" style="font-size:12px">Only people listed in the tree can be compared. A spouse who married in has no separate entry.</p>
+<div id="rres"></div><p class="mut" style="font-size:12px">Spouses can be compared too. Only people listed in the tree are available.</p>
 <button onclick="rA=rB=null;relView($('det'))">Clear</button> <button onclick="relMode=false;detail()">Back to details</button></div>`;relRes()}
 function sug(w){const s=$('r'+w).value.trim().toLowerCase(),b=$('s'+w);if(w==='a')rA=null;else rB=null;relRes();
 if(!s){b.innerHTML='';return}const m=search(s,['Name','NickName'],[],8);
-b.innerHTML=m.map(e=>`<div class="sr" onmousedown="choose('${w}','${id(e)}')"><b>${esc(v(e,'Name'))}</b> <span class="mut">${par(e)?'child of '+esc(v(par(e),'Name')):'top of tree'} ${esc(houseName(e))}</span></div>`).join('')||'<div class="mut">No match.</div>'}
+b.innerHTML=m.map(e=>`<div class="sr" onmousedown="choose('${w}','${id(e)}')"><b>${esc(v(e,'Name'))}</b> <span class="mut">${ctx(e)} ${esc(houseName(e))}</span></div>`).join('')||'<div class="mut">No match.</div>'}
 function choose(w,i){if(w==='a')rA=i;else rB=i;$('r'+w).value=v(byId.get(i),'Name');$('s'+w).innerHTML='';relRes()}
+const spT=e=>({F:'wife',M:'husband'}[v(e,'Gender')]||'spouse'),bp=e=>isP(e)?par(e):e;
 function relRes(){const el=$('rres');if(!el)return;const A=byId.get(rA),B=byId.get(rB);if(!A||!B){el.innerHTML='';return}
-const nm=e=>`<b>${esc(v(e,'Name'))}</b>`,r=relCalc(A,B);if(!r){el.innerHTML='<p class="warn">These two have no common ancestor in this tree.</p>';return}
-if(A===B){el.innerHTML=`<div class="res">That is the same person.</div>`;return}
-const t1=term(r.dA,r.dB,v(A,'Gender')),t2=term(r.dB,r.dA,v(B,'Gender'));
-const dc=e=>{const t=[e===A&&'A',e===B&&'B',e===r.L&&e!==A&&e!==B&&'Common ancestor'].filter(Boolean);
-return `<div class="n ${e===A||e===B?'sel':''}" style="${band(house(e))}" onclick="pick('${id(e)}')"><b>${esc(v(e,'Name'))}</b>${t.map(x=>`<span class="tg2">${x}</span>`).join('')}</div>`};
+if(A===B){el.innerHTML='<div class="res">That is the same person.</div>';return}
+const a0=bp(A),b0=bp(B),r=relCalc(a0,b0),nm=e=>`<b>${esc(v(e,'Name'))}</b>`;
+if(!r){el.innerHTML='<p class="warn">These two have no common ancestor in this tree.</p>';return}
+let head;
+if(a0===b0)head=isP(A)&&isP(B)?`${nm(A)} and ${nm(B)} are both married to ${nm(a0)}.`:`${nm(A)} is ${nm(B)}'s <b>${spT(A)}</b>.`;
+else{const t=term(r.dA,r.dB,v(a0,'Gender'));
+if(isP(A)&&isP(B))head=`${nm(A)} is the ${spT(A)} of ${nm(a0)}, who is the <b>${t}</b> of ${nm(b0)}, ${nm(B)}'s ${spT(b0)}.`;
+else if(isP(A))head=`${nm(A)} is the ${spT(A)} of ${nm(a0)}, who is ${nm(B)}'s <b>${t}</b>.`;
+else if(isP(B))head=`${nm(A)} is the <b>${t}</b> of ${nm(B)}'s ${spT(b0)} ${nm(b0)}.`;
+else{const t2=term(r.dB,r.dA,v(b0,'Gender'));head=`${nm(A)} is ${nm(B)}'s <b>${t}</b>.`+(t2!==t?`<br>${nm(B)} is ${nm(A)}'s <b>${t2}</b>.`:'')}}
+const dcard=x=>{const t=[x===A&&'A',x===B&&'B',x===r.L&&x!==a0&&x!==b0&&'Common ancestor'].filter(Boolean);
+return `<div class="n ${x===A||x===B?'sel':''}" style="${band(house(x))}" onclick="pick('${id(x)}')"><b>${esc(v(x,'Name'))}</b>${t.map(y=>`<span class="tg2">${y}</span>`).join('')}</div>`};
+const dc=e=>{const ps=[...new Set([A,B].filter(x=>isP(x)&&par(x)===e))];return `<div class="cp">${[e,...ps].map((x,i)=>(i?'<i class="mar">⚭</i>':'')+dcard(x)).join('')}</div>`};
 const ch=l=>l.map(e=>`<div class="vl"></div>${dc(e)}`).join('');
 const dia=(!r.dA||!r.dB)?dc(r.L)+ch(r.dA?r.pa:r.pb):dc(r.L)+`<div class="vl"></div><div class="cols"><div class="col">${ch(r.pa)}</div><div class="col">${ch(r.pb)}</div></div>`;
 const gn=n=>n+' generation'+(n>1?'s':'');
-el.innerHTML=`<div class="res">${nm(A)} is ${nm(B)}'s <b>${t1}</b>.${t2!==t1?`<br>${nm(B)} is ${nm(A)}'s <b>${t2}</b>.`:''}
-${r.dA&&r.dB?`<div class="mut" style="font-size:13px;margin-top:4px">Common ancestor: ${esc(v(r.L,'Name'))}. A is ${gn(r.dA)} below, B is ${gn(r.dB)} below.</div>`:''}</div><div class="rd">${dia}</div>`}
+el.innerHTML=`<div class="res">${head}${r.dA&&r.dB?`<div class="mut" style="font-size:13px;margin-top:4px">Common ancestor: ${esc(v(r.L,'Name'))}. ${esc(v(a0,'Name'))} is ${gn(r.dA)} below, ${esc(v(b0,'Name'))} is ${gn(r.dB)} below.</div>`:''}</div><div class="rd">${dia}</div>`}
 $('mediaIn').onchange=e=>{[...e.target.files].forEach(fl=>{const rel=(fl.webkitRelativePath||fl.name).toLowerCase().split('/').slice(1).join('/');const u=URL.createObjectURL(fl);files[fl.name.toLowerCase()]=u;if(rel)files[rel]=u});detail()};
 if(!new URLSearchParams(location.search).has('edit'))document.body.classList.add('ro');
 renderTree();
