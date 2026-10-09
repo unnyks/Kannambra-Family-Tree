@@ -32,10 +32,9 @@ label{display:block;margin-top:8px;font-size:13px;color:var(--mut)}label>*{displ
 .ro .ed{display:none}.warn{color:#b3541e;font-size:13px}.sr{padding:6px 8px;border-bottom:1px solid var(--ln);cursor:pointer}
 </style></head><body>
 <header><h1>🌳 Family Tree <span class="mut" id="cnt" style="font-size:13px"></span></h1>
-<button class="p" onclick="xmlIn.click()">Open XML</button>
-<button onclick="mediaIn.click()" title="Pick the folder holding photos, audio, video, text">Link media folder</button>
+<button class="ed" onclick="mediaIn.click()" title="Pick the folder holding photos, audio, video, text">Link media folder</button>
 <button class="ed" onclick="saveXml()">Save XML</button>
-<input id="xmlIn" type="file" accept=".xml" hidden><input id="mediaIn" type="file" webkitdirectory multiple hidden>
+<input id="mediaIn" type="file" webkitdirectory multiple hidden>
 </header>
 <main><div id="left"><input id="q" placeholder="Search name, spouse, place…" oninput="q=this.value;renderTree()"><div id="tree"></div></div><div id="det"></div></main>
 <script>
@@ -59,7 +58,7 @@ function card(e){const k=T(e).length,sp=v(e,'Spouse'),b=dsh('DateOfBirth',v(e,'D
 return `<div class="n ${id(e)===sel?'sel':''}" style="border-left-color:${house(e)}" onclick="pick('${id(e)}')"><b>${esc(v(e,'Name'))||'(unnamed)'}</b><span>${sp?'⚭ '+esc(sp)+' ':''}${b?'· b. '+esc(b)+' ':''}${k&&!open.has(id(e))?'· '+k+' child'+(k>1?'ren':''):''}</span></div>`}
 function node(e){const k=T(e),o=open.has(id(e));
 return `<li><div class="r"><b class="tg" onclick="tog('${id(e)}')">${k.length?(o?'▾':'▸'):'·'}</b>${card(e)}</div>${k.length&&o?`<ul>${k.map(node).join('')}</ul>`:''}</li>`}
-function renderTree(){if(!doc){$('tree').innerHTML='<p class="mut">Click “Open XML” to load your family tree file.</p>';return}
+function renderTree(){if(!doc){$('tree').innerHTML='<p class="mut">Loading the family tree…</p>';return}
 const s=q.trim().toLowerCase();
 if(s){const m=[...byId.values()].filter(e=>['Name','NickName','Spouse','City','Profession'].some(t=>v(e,t).toLowerCase().includes(s)));
 $('tree').innerHTML=m.slice(0,60).map(e=>`<div class="sr" onclick="pick('${id(e)}',1)"><b>${esc(v(e,'Name'))}</b> <span class="mut">${esc(v(e,'Spouse'))} ${esc(houseName(e))}</span></div>`).join('')||'<p class="mut">No matches.</p>';return}
@@ -105,9 +104,8 @@ mk('Branch',v(p,'Branch')+String(T(p).length+1).padStart(2,'0'));mk('Name','New 
 open.add(id(p));index();sel=id(n);edit=true;render()}
 function del(){const e=byId.get(sel),n=e.querySelectorAll('Tree').length+1;if(!confirm(`Delete ${v(e,'Name')}${n>1?' and '+(n-1)+' descendants':''}?`))return;
 const p=par(e);e.remove();index();sel=p?id(p):null;render()}
-$('xmlIn').onchange=e=>e.target.files[0]?.text().then(load);
 $('mediaIn').onchange=e=>{[...e.target.files].forEach(fl=>{const rel=(fl.webkitRelativePath||fl.name).toLowerCase().split('/').slice(1).join('/');const u=URL.createObjectURL(fl);files[fl.name.toLowerCase()]=u;if(rel)files[rel]=u});detail()};
 if(!new URLSearchParams(location.search).has('edit'))document.body.classList.add('ro');
 renderTree();
-fetch('tree.xml').then(r=>r.ok?r.text():Promise.reject()).then(load).catch(()=>{});
+fetch('tree.xml').then(r=>r.ok?r.text():Promise.reject()).then(load).catch(()=>{$('tree').innerHTML='<p class="mut">Could not load tree.xml.</p>'});
 </script></body></html>
