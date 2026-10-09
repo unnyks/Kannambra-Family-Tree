@@ -29,10 +29,16 @@ dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:10px 0}dt{col
 .m{margin:10px 0}.m img,.m video{max-width:100%;border-radius:6px}.m audio{width:100%}
 .m pre{white-space:pre-wrap;background:var(--bg);padding:8px;border-radius:6px;margin:0}
 label{display:block;margin-top:8px;font-size:13px;color:var(--mut)}label>*{display:block;width:100%;margin-top:2px}
-.ro .ed{display:none}.warn{color:#b3541e;font-size:13px}.sr{padding:6px 8px;border-bottom:1px solid var(--ln);cursor:pointer}
+.ro .ed{display:none}.rd{display:flex;flex-direction:column;align-items:center;overflow-x:auto;padding:6px 0}.rd .n{text-align:center;max-width:100%}
+.vl{width:2px;height:16px;background:var(--ln)}.cols{position:relative;display:grid;grid-template-columns:1fr 1fr;width:100%}
+.cols::before{content:'';position:absolute;top:0;left:25%;right:25%;border-top:2px solid var(--ln)}.col{display:flex;flex-direction:column;align-items:center;min-width:0}
+.n .tg2{display:inline-block;background:var(--acc);color:#fff;border-radius:10px;padding:0 8px;font-size:11px;margin:2px 0 0 6px}
+.res{background:var(--bg);border-radius:8px;padding:8px 12px;margin:10px 0}
+.warn{color:#b3541e;font-size:13px}.sr{padding:6px 8px;border-bottom:1px solid var(--ln);cursor:pointer}
 </style></head><body>
 <header><h1>🌳 Family Tree <span class="mut" id="cnt" style="font-size:13px"></span></h1>
 <div id="bar"></div>
+<button onclick="openRel()">🔗 Relationship</button>
 <button class="ed" onclick="mediaIn.click()" title="Pick the folder holding photos, audio, video, text">Link media folder</button>
 <button class="ed" onclick="saveXml()">Save XML</button>
 <input id="mediaIn" type="file" webkitdirectory multiple hidden>
@@ -41,7 +47,7 @@ label{display:block;margin-top:8px;font-size:13px;color:var(--mut)}label>*{displ
 <script>
 const FIELDS=[['Name','Name'],['NickName','Nickname'],['Gender','Gender'],['Spouse','Spouse'],['DateOfBirth','Born'],['DateOfDeath','Died'],['DateOfMarriage','Married'],['Education','Education'],['Profession','Profession'],['JobProfile','Job profile'],['Address','Address'],['City','City'],['State','State'],['Country','Country'],['Pin','Pin'],['Telephone','Telephone'],['Email','Email'],['ImageFile','Photo file'],['Comments','Comments']];
 const DATES=['DateOfBirth','DateOfDeath','DateOfMarriage'];
-let doc=null,sel=null,edit=false,files={},open=new Set(),q='',byId=new Map();
+let relMode=false,rA=null,rB=null,doc=null,sel=null,edit=false,files={},open=new Set(),q='',byId=new Map();
 const $=s=>document.getElementById(s),esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const T=e=>[...e.children].filter(c=>c.tagName==='Tree'),f=(e,t)=>[...e.children].find(c=>c.tagName===t);
 const v=(e,t)=>(f(e,t)?.textContent||'').trim(),id=e=>v(e,'Id');
@@ -63,7 +69,7 @@ function node(e){const k=T(e),o=open.has(id(e));
 return `<li><div class="r"><b class="tg" onclick="tog('${id(e)}')">${k.length?(o?'▾':'▸'):'·'}</b>${card(e)}</div>${k.length&&o?`<ul>${k.map(node).join('')}</ul>`:''}</li>`}
 function renderTree(){if(!doc){$('tree').innerHTML='<p class="mut">Loading the family tree…</p>';return}
 const s=q.trim().toLowerCase();
-if(s){const m=[...byId.values()].filter(e=>['Name','NickName','Spouse','City','Profession'].some(t=>v(e,t).toLowerCase().includes(s)));
+if(s){const m=search(s,['Name','NickName','Spouse'],['City','Profession'],60);
 $('tree').innerHTML=m.slice(0,60).map(e=>`<div class="sr" onclick="pick('${id(e)}',1)"><b>${esc(v(e,'Name'))}</b> <span class="mut">${esc(v(e,'Spouse'))} ${esc(houseName(e))}</span></div>`).join('')||'<p class="mut">No matches.</p>';return}
 $('tree').innerHTML=`<ul class="t">${T(doc.documentElement).map(node).join('')}</ul>`}
 const bh=e=>{while(e&&!f(e,'Id')?.getAttribute('Color'))e=par(e);return e};
@@ -73,14 +79,14 @@ return `<button class="${e===cur?'on':''}" style="background:${i.getAttribute('C
 function jump(i){pick(i,1);document.querySelector('.n.sel')?.scrollIntoView({block:'center',behavior:'smooth'})}
 function render(){renderBar();renderTree();detail()}
 function tog(i){open.has(i)?open.delete(i):open.add(i);renderTree()}
-function pick(i,clr){sel=i;edit=false;if(clr){q='';$('q').value='';let p=par(byId.get(i));while(p){open.add(id(p));p=par(p)}}render()}
+function pick(i,clr){sel=i;edit=false;relMode=false;if(clr){q='';$('q').value='';let p=par(byId.get(i));while(p){open.add(id(p));p=par(p)}}render()}
 const lk=e=>e?`<a class="l" onclick="pick('${id(e)}')">${esc(v(e,'Name'))}</a>`:'—';
 function resolve(p){const n='/'+p.replace(/[\\\/]+/g,'/').toLowerCase();const k=Object.keys(files).find(k=>n.endsWith('/'+k));if(k)return files[k];
 const s=p.trim().replace(/\\/g,'/');return /^([a-z]:|\/|https?:)/i.test(s)?'media/'+encodeURIComponent(s.split('/').pop()):s.split('/').map(encodeURIComponent).join('/')}
 const bad=el=>{el.outerHTML='<span class="warn">Media file not found on the site.</span>'};
 function media(e){const a=[];if(photo(e))a.push({type:'photo',file:photo(e),caption:'Photo'});
 [...e.children].filter(c=>c.tagName==='Media').forEach(c=>a.push({type:c.getAttribute('type')||'photo',file:c.getAttribute('file')||'',caption:c.getAttribute('caption')||''}));return a}
-function detail(){const el=$('det');if(!doc){el.innerHTML='';return}const e=byId.get(sel);if(!e){el.innerHTML='';return}
+function detail(){const el=$('det');if(!doc){el.innerHTML='';return}if(relMode)return relView(el);const e=byId.get(sel);if(!e){el.innerHTML='';return}
 if(edit)return form(e,el);
 const path=[];let c=par(e);while(c){path.unshift(lk(c));c=par(c)}
 const M=media(e),hn=houseName(e);
@@ -89,7 +95,7 @@ el.innerHTML=`<div class="panel"><div class="mut" style="font-size:13px">${path.
 <dl>${FIELDS.slice(1).filter(([t])=>t!=='ImageFile'&&v(e,t)).map(([t,l])=>`<dt>${l}</dt><dd>${esc(dsh(t,v(e,t)))}</dd>`).join('')}
 <dt>Parent</dt><dd>${lk(par(e))}</dd><dt>Children</dt><dd>${T(e).map(lk).join(', ')||'—'}</dd></dl>
 ${M.map((m,i)=>`<div class="m"><div class="mut">${esc(m.caption||m.file)}</div><div id="m${i}"></div></div>`).join('')}
-<div class="ed" style="margin-top:8px"><button onclick="edit=true;detail()">Edit</button> <button onclick="addKid()">+ Add child</button> <button onclick="del()">Delete</button></div></div>`;
+<p><button onclick="openRel('${id(e)}')">🔗 How are we related?</button></p><div class="ed" style="margin-top:8px"><button onclick="edit=true;detail()">Edit</button> <button onclick="addKid()">+ Add child</button> <button onclick="del()">Delete</button></div></div>`;
 M.forEach((m,i)=>{const u=resolve(m.file),t=$('m'+i);if(!u){t.innerHTML=`<span class="warn">File not found: ${esc(m.file)} — use “Link media folder”.</span>`;return}
 if(m.type==='photo')t.innerHTML=`<img src="${u}" onerror="bad(this)">`;else if(m.type==='audio')t.innerHTML=`<audio controls onerror="bad(this)" src="${u}"></audio>`;
 else if(m.type==='video')t.innerHTML=`<video controls onerror="bad(this)" src="${u}"></video>`;else fetch(u).then(r=>r.ok?r.text():Promise.reject()).then(x=>t.innerHTML=`<pre>${esc(x)}</pre>`).catch(()=>t.innerHTML='<span class="warn">Media file not found on the site.</span>')})}
@@ -112,6 +118,53 @@ mk('Branch',v(p,'Branch')+String(T(p).length+1).padStart(2,'0'));mk('Name','New 
 open.add(id(p));index();sel=id(n);edit=true;render()}
 function del(){const e=byId.get(sel),n=e.querySelectorAll('Tree').length+1;if(!confirm(`Delete ${v(e,'Name')}${n>1?' and '+(n-1)+' descendants':''}?`))return;
 const p=par(e);e.remove();index();sel=p?id(p):null;render()}
+// Similar-sounding spellings: each pair [written, treated as]. Edit this list to add your own.
+const SOUND=[['zh','l'],['sh','s'],['th','t'],['dh','d'],['bh','b'],['kh','k'],['gh','g'],['ph','p'],['ch','c'],['ck','k'],['ee','i'],['oo','u'],['aa','a'],['ai','ei'],['w','v'],['y','i']];
+const nw=w=>{w=w.toLowerCase().replace(/[^a-z]/g,'');SOUND.forEach(([a,b])=>w=w.split(a).join(b));w=w.replace(/(.)\1+/g,'$1');if(w.length>=5&&w.endsWith('an'))w=w.slice(0,-2);return w};
+const toks=x=>x.split(/[\s.,]+/).map(nw).filter(Boolean);
+function dist(a,b){const d=[...Array(a.length+1)].map((_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;
+for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
+function tokScore(q,t){if(q===t)return 0;if(t.startsWith(q))return 1;const L=Math.max(q.length,t.length),m=L>=9?2:L>=5?1:0;
+if(m&&dist(q,t)<=m)return 2;if(q.length>=6&&dist(q,t.slice(0,q.length))<=1)return 2;return -1}
+function search(s,nf,pf,lim){const raw=s.trim().toLowerCase(),qt=toks(raw);if(!qt.length)return[];const out=[];
+byId.forEach(e=>{let sc=-1;if(nf.concat(pf).some(t=>v(e,t).toLowerCase().includes(raw)))sc=0;
+else{const names=nf.flatMap(t=>toks(v(e,t)));let tot=0,ok=true;
+for(const q of qt){let b=-1;for(const t of names){const r=tokScore(q,t);if(r>=0&&(b<0||r<b))b=r}if(b<0){ok=false;break}tot+=b}
+if(ok)sc=1+tot}
+if(sc>=0)out.push([sc,e])});return out.sort((a,b)=>a[0]-b[0]).slice(0,lim).map(x=>x[1])}
+const anc=e=>{const a=[];while(e){a.push(e);e=par(e)}return a};
+function relCalc(A,B){const la=anc(A),lb=anc(B),L=la.find(x=>lb.includes(x));if(!L)return null;const dA=la.indexOf(L),dB=lb.indexOf(L);
+return{L,dA,dB,pa:la.slice(0,dA).reverse(),pb:lb.slice(0,dB).reverse()}}
+function term(dA,dB,g){const w=(m,f,n)=>g==='M'?m:g==='F'?f:n,gr=k=>k<=0?'':k<=2?'great-'.repeat(k):k+'× great-';
+if(dA===0)return dB===1?w('father','mother','parent'):gr(dB-2)+w('grandfather','grandmother','grandparent');
+if(dB===0)return dA===1?w('son','daughter','child'):gr(dA-2)+w('grandson','granddaughter','grandchild');
+if(dA===1&&dB===1)return w('brother','sister','sibling');
+if(dA===1)return gr(dB-2)+w('uncle','aunt','uncle/aunt');
+if(dB===1)return (dA===2?'':gr(dA-3)+'grand')+w('nephew','niece','nephew/niece');
+const k=Math.min(dA,dB)-1,r=Math.abs(dA-dB),o=['','first','second','third','fourth','fifth','sixth','seventh','eighth'][k]||k+'th';
+return o+' cousin'+(r?' '+(r===1?'once':r===2?'twice':r+' times')+' removed':'')}
+function openRel(a){if(!doc)return;relMode=true;edit=false;if(a)rA=a;else if(!rA&&sel)rA=sel;detail();$('det').scrollIntoView({block:'nearest',behavior:'smooth'})}
+function relView(el){const nm=i=>i?esc(v(byId.get(i),'Name')):'';
+el.innerHTML=`<div class="panel"><h2>🔗 Relationship</h2><p class="mut" style="margin:2px 0 6px">Type two names and pick them from the list.</p>
+<label>Person A</label><input id="ra" style="width:100%" autocomplete="off" oninput="sug('a')" value="${nm(rA)}"><div id="sa"></div>
+<label>Person B</label><input id="rb" style="width:100%" autocomplete="off" oninput="sug('b')" value="${nm(rB)}"><div id="sb"></div>
+<div id="rres"></div><p class="mut" style="font-size:12px">Only people listed in the tree can be compared. A spouse who married in has no separate entry.</p>
+<button onclick="rA=rB=null;relView($('det'))">Clear</button> <button onclick="relMode=false;detail()">Back to details</button></div>`;relRes()}
+function sug(w){const s=$('r'+w).value.trim().toLowerCase(),b=$('s'+w);if(w==='a')rA=null;else rB=null;relRes();
+if(!s){b.innerHTML='';return}const m=search(s,['Name','NickName'],[],8);
+b.innerHTML=m.map(e=>`<div class="sr" onmousedown="choose('${w}','${id(e)}')"><b>${esc(v(e,'Name'))}</b> <span class="mut">${par(e)?'child of '+esc(v(par(e),'Name')):'top of tree'} ${esc(houseName(e))}</span></div>`).join('')||'<div class="mut">No match.</div>'}
+function choose(w,i){if(w==='a')rA=i;else rB=i;$('r'+w).value=v(byId.get(i),'Name');$('s'+w).innerHTML='';relRes()}
+function relRes(){const el=$('rres');if(!el)return;const A=byId.get(rA),B=byId.get(rB);if(!A||!B){el.innerHTML='';return}
+const nm=e=>`<b>${esc(v(e,'Name'))}</b>`,r=relCalc(A,B);if(!r){el.innerHTML='<p class="warn">These two have no common ancestor in this tree.</p>';return}
+if(A===B){el.innerHTML=`<div class="res">That is the same person.</div>`;return}
+const t1=term(r.dA,r.dB,v(A,'Gender')),t2=term(r.dB,r.dA,v(B,'Gender'));
+const dc=e=>{const t=[e===A&&'A',e===B&&'B',e===r.L&&e!==A&&e!==B&&'Common ancestor'].filter(Boolean);
+return `<div class="n ${e===A||e===B?'sel':''}" style="${band(house(e))}" onclick="pick('${id(e)}')"><b>${esc(v(e,'Name'))}</b>${t.map(x=>`<span class="tg2">${x}</span>`).join('')}</div>`};
+const ch=l=>l.map(e=>`<div class="vl"></div>${dc(e)}`).join('');
+const dia=(!r.dA||!r.dB)?dc(r.L)+ch(r.dA?r.pa:r.pb):dc(r.L)+`<div class="vl"></div><div class="cols"><div class="col">${ch(r.pa)}</div><div class="col">${ch(r.pb)}</div></div>`;
+const gn=n=>n+' generation'+(n>1?'s':'');
+el.innerHTML=`<div class="res">${nm(A)} is ${nm(B)}'s <b>${t1}</b>.${t2!==t1?`<br>${nm(B)} is ${nm(A)}'s <b>${t2}</b>.`:''}
+${r.dA&&r.dB?`<div class="mut" style="font-size:13px;margin-top:4px">Common ancestor: ${esc(v(r.L,'Name'))}. A is ${gn(r.dA)} below, B is ${gn(r.dB)} below.</div>`:''}</div><div class="rd">${dia}</div>`}
 $('mediaIn').onchange=e=>{[...e.target.files].forEach(fl=>{const rel=(fl.webkitRelativePath||fl.name).toLowerCase().split('/').slice(1).join('/');const u=URL.createObjectURL(fl);files[fl.name.toLowerCase()]=u;if(rel)files[rel]=u});detail()};
 if(!new URLSearchParams(location.search).has('edit'))document.body.classList.add('ro');
 renderTree();
