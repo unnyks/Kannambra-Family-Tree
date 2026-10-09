@@ -49,7 +49,7 @@ const dsh=(t,s)=>DATES.includes(t)&&/^\d{4}-\d\d-\d\d/.test(s)?s.slice(0,10):s;
 const photo=e=>{const s=v(e,'ImageFile');return s&&s.toLowerCase()!=='null'?s:''};
 function setF(e,t,val){let c=f(e,t);if(!c){c=doc.createElement(t);const k=T(e)[0];k?e.insertBefore(c,k):e.appendChild(c)}c.textContent=val}
 function load(x){const d=new DOMParser().parseFromString(x,'text/xml');if(d.querySelector('parsererror')){alert('Invalid XML');return}
-doc=d;index();const r=T(doc.documentElement);r.forEach(e=>open.add(id(e)));sel=r[0]?id(r[0]):null;edit=false;render()}
+doc=d;index();if(!byId.size){$('tree').innerHTML='<p class="mut">tree.xml was loaded but contains no people. Please upload the full family tree file as tree.xml.</p>';return}const r=T(doc.documentElement);r.forEach(e=>open.add(id(e)));sel=r[0]?id(r[0]):null;edit=false;render()}
 function index(){byId=new Map();doc.querySelectorAll('Tree').forEach(e=>byId.set(id(e),e));$('cnt').textContent=byId.size+' people'}
 function saveXml(){if(!doc)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['<?xml version="1.0" encoding="utf-8"?>'+new XMLSerializer().serializeToString(doc)],{type:'text/xml'}));a.download='KFTree_Hierarchical.xml';a.click()}
 function house(e){let c=e;while(c){const i=f(c,'Id');if(i?.getAttribute('Color'))return i.getAttribute('Color');c=par(c)}return'var(--ln)'}
