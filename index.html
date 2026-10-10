@@ -40,9 +40,12 @@ label{display:block;margin-top:8px;font-size:13px;color:var(--mut)}label>*{displ
 <div id="bar"></div>
 <button onclick="openRel()">🔗 Relationship</button>
 <button class="ed" onclick="mediaIn.click()" title="Pick the folder holding photos, audio, video, text">Link media folder</button>
-<button class="ed" onclick="saveXml()">Save XML</button>
-<input id="mediaIn" type="file" webkitdirectory multiple hidden>
+<button class="ed" onclick="xmlIn.click()">Open XML</button>
+<button class="ed" onclick="saveXml('full')">Save full XML</button>
+<button class="ed p" onclick="saveXml('public')">Save public XML</button>
+<input id="xmlIn" type="file" accept=".xml" hidden><input id="mediaIn" type="file" webkitdirectory multiple hidden>
 </header>
+<div class="ed" id="note" style="padding:8px 16px;background:var(--card);border-bottom:1px solid var(--ln);font-size:13px">Editing mode. The page loaded the <b>public</b> copy, so private items are missing. Click <b>Open XML</b> to load your full file. <b>Save public XML</b> makes the <code>tree.xml</code> to upload to GitHub (private media and phone, email, address, pin removed). Keep the full file to yourself.</div>
 <main><div id="left"><input id="q" placeholder="Search name, spouse, place…" oninput="q=this.value;renderTree()"><div id="tree"></div></div><div id="det"></div></main>
 <script>
 const FIELDS=[['Name','Name'],['NickName','Nickname'],['Gender','Gender'],['Spouse','Spouse'],['DateOfBirth','Born'],['DateOfDeath','Died'],['DateOfMarriage','Married'],['Education','Education'],['Profession','Profession'],['JobProfile','Job profile'],['Address','Address'],['City','City'],['State','State'],['Country','Country'],['Pin','Pin'],['Telephone','Telephone'],['Email','Email'],['ImageFile','Photo file'],['Comments','Comments']];
@@ -67,7 +70,10 @@ partners(p).forEach((x,n)=>{if(!f(x,'Id')){const i=doc.createElement('Id');i.tex
 function load(x){const d=new DOMParser().parseFromString(x,'text/xml');if(d.querySelector('parsererror')){alert('Invalid XML');return}
 doc=d;convertSpouses();index();if(!byId.size){$('tree').innerHTML='<p class="mut">tree.xml was loaded but contains no people. Please upload the full family tree file as tree.xml.</p>';return}const r=T(doc.documentElement);r.forEach(e=>open.add(id(e)));sel=r[0]?id(r[0]):null;edit=false;render()}
 function index(){byId=new Map();doc.querySelectorAll('Tree,Partner').forEach(e=>byId.set(id(e),e));const a=[...byId.values()],np=a.filter(isP).length;$('cnt').textContent=(a.length-np)+' people'+(np?' · '+np+' spouses':'')}
-function saveXml(){if(!doc)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['<?xml version="1.0" encoding="utf-8"?>'+new XMLSerializer().serializeToString(doc)],{type:'text/xml'}));a.download='KFTree_Hierarchical.xml';a.click()}
+const PRIV=['Telephone','Email','Address','Pin'],ro=()=>document.body.classList.contains('ro');
+function xmlOut(mode){const d=doc.cloneNode(true);if(mode==='public'){d.querySelectorAll('Media').forEach(m=>{if(m.getAttribute('public')==='no')m.remove()});
+d.querySelectorAll(PRIV.join(',')).forEach(x=>x.textContent='')}return '<?xml version="1.0" encoding="utf-8"?>'+new XMLSerializer().serializeToString(d)}
+function saveXml(mode){if(!doc)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([xmlOut(mode)],{type:'text/xml'}));a.download=mode==='public'?'tree.xml':'KFTree_full.xml';a.click()}
 function house(e){let c=e;while(c){const i=f(c,'Id');if(i?.getAttribute('Color'))return i.getAttribute('Color');c=par(c)}return'var(--ln)'}
 function houseName(e){let c=e;while(c){const i=f(c,'Id');if(i?.getAttribute('Name'))return i.getAttribute('Name');c=par(c)}return''}
 const BAND='lr'; // 'l' left only, 'lr' left+right, 'tl' top+left, 'all' every side
@@ -91,36 +97,50 @@ function tog(i){open.has(i)?open.delete(i):open.add(i);renderTree()}
 function pick(i,clr){sel=i;edit=false;relMode=false;if(clr){q='';$('q').value='';let p=par(byId.get(i));while(p){open.add(id(p));p=par(p)}}render()}
 const lk=e=>e?`<a class="l" onclick="pick('${id(e)}')">${esc(v(e,'Name'))}</a>`:'—';
 function resolve(p){const n='/'+p.replace(/[\\\/]+/g,'/').toLowerCase();const k=Object.keys(files).find(k=>n.endsWith('/'+k));if(k)return files[k];
-const s=p.trim().replace(/\\/g,'/');return /^([a-z]:|\/|https?:)/i.test(s)?'media/'+encodeURIComponent(s.split('/').pop()):s.split('/').map(encodeURIComponent).join('/')}
+const s=p.trim().replace(/\\/g,'/');if(/^https?:/i.test(s))return s;if(/^([a-z]:|\/)/i.test(s))return 'media/'+encodeURIComponent(s.split('/').pop());return (s.startsWith('media/')?s:'media/'+s).split('/').map(encodeURIComponent).join('/')}
+function embed(m){let u=m.file.trim(),x;const fr=(src,r)=>`<iframe src="${src}" allowfullscreen loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" style="width:100%;aspect-ratio:${r||'16/9'};border:0;border-radius:6px"></iframe>`;
+const lnk=`<div style="font-size:13px"><a class="l" href="${esc(u)}" target="_blank" rel="noopener">Open original ↗</a></div>`;
+if(x=u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i))return fr('https://www.youtube.com/embed/'+x[1])+lnk;
+if(x=u.match(/vimeo\.com\/(?:video\/)?(\d+)/i))return fr('https://player.vimeo.com/video/'+x[1])+lnk;
+if(x=u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([\w-]+)/i))return fr('https://drive.google.com/file/d/'+x[1]+'/preview','4/3')+lnk;
+if(/dropbox\.com/i.test(u))u=u.replace(/([?&])dl=0/,'$1raw=1');
+const a=esc(u);let t=/\.(jpe?g|png|gif|webp|svg|avif)(\?|#|$)/i.test(u)?'photo':/\.(mp3|m4a|wav|ogg|aac|flac)(\?|#|$)/i.test(u)?'audio':/\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(u)?'video':'';
+if(!t&&/photos\.app\.goo\.gl|photos\.google|facebook\.com|instagram\.com|onedrive|1drv\.ms|icloud/i.test(u))return `<a class="l" href="${a}" target="_blank" rel="noopener">Open on ${esc(new URL(u).hostname.replace(/^www\./,''))} ↗</a>`;
+t=t||m.type;
+if(t==='photo')return `<img src="${a}" onerror="bad(this)">`+lnk;if(t==='audio')return `<audio controls onerror="bad(this)" src="${a}"></audio>`+lnk;if(t==='video')return `<video controls onerror="bad(this)" src="${a}"></video>`+lnk;
+return `<a class="l" href="${a}" target="_blank" rel="noopener">Open link ↗</a>`}
 const bad=el=>{el.outerHTML='<span class="warn">Media file not found on the site.</span>'};
 function media(e){const a=[];if(photo(e))a.push({type:'photo',file:photo(e),caption:'Photo'});
-[...e.children].filter(c=>c.tagName==='Media').forEach(c=>a.push({type:c.getAttribute('type')||'photo',file:c.getAttribute('file')||'',caption:c.getAttribute('caption')||''}));return a}
+[...e.children].filter(c=>c.tagName==='Media').forEach(c=>a.push({type:c.getAttribute('type')||'photo',file:c.getAttribute('file')||'',caption:c.getAttribute('caption')||'',pub:c.getAttribute('public')!=='no'}));return a.map(m=>({pub:true,...m}))}
 function detail(){const el=$('det');if(!doc){el.innerHTML='';return}if(relMode)return relView(el);const e=byId.get(sel);if(!e){el.innerHTML='';return}
 if(edit)return form(e,el);
 const path=[];let c=par(e);while(c){path.unshift(lk(c));c=par(c)}
-const M=media(e),hn=houseName(e);
+const M=media(e).filter(m=>!ro()||m.pub),hn=houseName(e);
 el.innerHTML=`<div class="panel"><div class="mut" style="font-size:13px">${path.join(' › ')}</div><h2>${esc(v(e,'Name'))}</h2>
 <div class="mut">${hn?esc(hn)+' · ':''}${isP(e)?'Spouse of '+lk(par(e)):'Branch '+esc(v(e,'Branch'))}</div>
-<dl>${fields(e).slice(1).filter(([t])=>t!=='ImageFile'&&v(e,t)).map(([t,l])=>`<dt>${l}</dt><dd>${esc(dsh(t,v(e,t)))}</dd>`).join('')}
+<dl>${fields(e).slice(1).filter(([t])=>t!=='ImageFile'&&v(e,t)&&!(ro()&&PRIV.includes(t))).map(([t,l])=>`<dt>${l}</dt><dd>${esc(dsh(t,v(e,t)))}</dd>`).join('')}
 ${isP(e)?'':`<dt>Parent</dt><dd>${lk(par(e))}</dd><dt>Spouse</dt><dd>${partners(e).map(lk).join(', ')||'—'}</dd><dt>Children</dt><dd>${T(e).map(lk).join(', ')||'—'}</dd>`}</dl>
-${M.map((m,i)=>`<div class="m"><div class="mut">${esc(m.caption||m.file)}</div><div id="m${i}"></div></div>`).join('')}
+${M.map((m,i)=>`<div class="m"><div class="mut">${esc(m.caption||m.file)}${m.pub?'':' 🔒 hidden from public'}</div><div id="m${i}"></div></div>`).join('')}
 <p><button onclick="openRel('${id(e)}')">🔗 How are we related?</button></p><div class="ed" style="margin-top:8px"><button onclick="edit=true;detail()">Edit</button> ${isP(e)?'':'<button onclick="addKid()">+ Add child</button> <button onclick="addPartner()">+ Add spouse</button>'} <button onclick="del()">Delete</button></div></div>`;
-M.forEach((m,i)=>{const u=resolve(m.file),t=$('m'+i);if(!u){t.innerHTML=`<span class="warn">File not found: ${esc(m.file)} — use “Link media folder”.</span>`;return}
+M.forEach((m,i)=>{const t=$('m'+i);if(/^https?:\/\//i.test(m.file.trim())){t.innerHTML=embed(m);return}const u=resolve(m.file);if(!u){t.innerHTML=`<span class="warn">File not found: ${esc(m.file)} — use “Link media folder”.</span>`;return}
 if(m.type==='photo')t.innerHTML=`<img src="${u}" onerror="bad(this)">`;else if(m.type==='audio')t.innerHTML=`<audio controls onerror="bad(this)" src="${u}"></audio>`;
 else if(m.type==='video')t.innerHTML=`<video controls onerror="bad(this)" src="${u}"></video>`;else fetch(u).then(r=>r.ok?r.text():Promise.reject()).then(x=>t.innerHTML=`<pre>${esc(x)}</pre>`).catch(()=>t.innerHTML='<span class="warn">Media file not found on the site.</span>')})}
 function form(e,el){const ms=[...e.children].filter(c=>c.tagName==='Media');
 el.innerHTML=`<div class="panel"><h2>Edit</h2>${fields(e).map(([t,l])=>t==='Gender'?`<label>${l}<select id="f_${t}">${['','M','F'].map(g=>`<option ${g===v(e,t)?'selected':''}>${g}</option>`).join('')}</select></label>`:
 t==='Comments'||t==='Address'?`<label>${l}<textarea id="f_${t}" rows="3">${esc(f(e,t)?.textContent||'')}</textarea></label>`:`<label>${l}<input id="f_${t}" value="${esc(dsh(t,v(e,t)))}"></label>`).join('')}
 <label>Attached media</label>${ms.map((m,i)=>`<div class="m"><select onchange="ms_(${i},'type',this.value)">${['photo','audio','video','text'].map(t=>`<option ${t===m.getAttribute('type')?'selected':''}>${t}</option>`).join('')}</select>
-<input value="${esc(m.getAttribute('file'))}" onchange="ms_(${i},'file',this.value)"><input value="${esc(m.getAttribute('caption'))}" placeholder="caption" onchange="ms_(${i},'caption',this.value)"><button onclick="rm(${i})">Remove</button></div>`).join('')}
-<button onclick="attach.click()">+ Attach file</button><input id="attach" type="file" hidden onchange="addM(this)">
+<input value="${esc(m.getAttribute('file'))}" onchange="ms_(${i},'file',this.value)"><input value="${esc(m.getAttribute('caption'))}" placeholder="caption" onchange="ms_(${i},'caption',this.value)"><label style="display:flex;gap:6px;align-items:center;margin:4px 0"><input type="checkbox" style="width:auto;display:inline-block;margin:0" ${m.getAttribute('public')==='no'?'':'checked'} onchange="ms_(${i},'public',this.checked?'yes':'no')"> Show on public site</label><button onclick="rm(${i})">Remove</button></div>`).join('')}
+<button onclick="attach.click()">+ Attach file</button> <button onclick="addLink()">+ Add link</button><input id="attach" type="file" hidden onchange="addM(this)">
 <p><button class="p" onclick="save()">Done</button> <button onclick="edit=false;detail()">Cancel</button></p></div>`}
 const mel=i=>[...byId.get(sel).children].filter(c=>c.tagName==='Media')[i];
 function ms_(i,k,x){mel(i).setAttribute(k,x)}function rm(i){saveForm();mel(i).remove();detail()}
 function saveForm(){const e=byId.get(sel);fields(e).forEach(([t])=>{let x=$('f_'+t).value;if(DATES.includes(t)&&/^\d{4}-\d\d-\d\d$/.test(x))x+='T00:00:00';if(x!==''||f(e,t))setF(e,t,x)})}
 function save(){saveForm();const e=byId.get(sel);if(isP(e))syncSpouse(par(e));edit=false;index();render()}
+function addLink(){const u=(prompt('Paste the link (YouTube, Vimeo, Google Drive, or a direct file link):')||'').trim();if(!/^https?:\/\//i.test(u)){if(u)alert('The link must start with http:// or https://');return}
+saveForm();const e=byId.get(sel),m=doc.createElement('Media');m.setAttribute('type',/youtu|vimeo/i.test(u)||/\.(mp4|webm|mov)/i.test(u)?'video':/\.(mp3|m4a|wav|ogg)/i.test(u)?'audio':'photo');m.setAttribute('file',u);m.setAttribute('caption','');m.setAttribute('public','no');
+const k=T(e)[0];k?e.insertBefore(m,k):e.appendChild(m);detail()}
 function addM(inp){const fl=inp.files[0];if(!fl)return;saveForm();const e=byId.get(sel);files[fl.name.toLowerCase()]=URL.createObjectURL(fl);
-const m=doc.createElement('Media');m.setAttribute('type',fl.type.startsWith('image')?'photo':fl.type.startsWith('audio')?'audio':fl.type.startsWith('video')?'video':'text');m.setAttribute('file',fl.name);m.setAttribute('caption','');
+const m=doc.createElement('Media');m.setAttribute('type',fl.type.startsWith('image')?'photo':fl.type.startsWith('audio')?'audio':fl.type.startsWith('video')?'video':'text');m.setAttribute('file',fl.name);m.setAttribute('caption','');m.setAttribute('public','no');
 const k=T(e)[0];k?e.insertBefore(m,k):e.appendChild(m);detail()}
 function addPartner(){const p=byId.get(sel),n=addPartnerEl(p,'New spouse');syncSpouse(p);open.add(id(p));index();sel=id(n);edit=true;render()}
 function addKid(){const p=byId.get(sel),n=doc.createElement('Tree'),mk=(t,x)=>{const c=doc.createElement(t);c.textContent=x;n.appendChild(c)};
@@ -183,6 +203,7 @@ const ch=l=>l.map(e=>`<div class="vl"></div>${dc(e)}`).join('');
 const dia=(!r.dA||!r.dB)?dc(r.L)+ch(r.dA?r.pa:r.pb):dc(r.L)+`<div class="vl"></div><div class="cols"><div class="col">${ch(r.pa)}</div><div class="col">${ch(r.pb)}</div></div>`;
 const gn=n=>n+' generation'+(n>1?'s':'');
 el.innerHTML=`<div class="res">${head}${r.dA&&r.dB?`<div class="mut" style="font-size:13px;margin-top:4px">Common ancestor: ${esc(v(r.L,'Name'))}. ${esc(v(a0,'Name'))} is ${gn(r.dA)} below, ${esc(v(b0,'Name'))} is ${gn(r.dB)} below.</div>`:''}</div><div class="rd">${dia}</div>`}
+$('xmlIn').onchange=e=>e.target.files[0]?.text().then(x=>{load(x);$('note').style.display='none'});
 $('mediaIn').onchange=e=>{[...e.target.files].forEach(fl=>{const rel=(fl.webkitRelativePath||fl.name).toLowerCase().split('/').slice(1).join('/');const u=URL.createObjectURL(fl);files[fl.name.toLowerCase()]=u;if(rel)files[rel]=u});detail()};
 if(!new URLSearchParams(location.search).has('edit'))document.body.classList.add('ro');
 renderTree();
