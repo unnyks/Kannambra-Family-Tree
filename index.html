@@ -50,7 +50,7 @@ label{display:block;margin-top:8px;font-size:13px;color:var(--mut)}label>*{displ
 <script>
 const FIELDS=[['Name','Name'],['NickName','Nickname'],['Gender','Gender'],['Spouse','Spouse'],['DateOfBirth','Born'],['DateOfDeath','Died'],['DateOfMarriage','Married'],['Education','Education'],['Profession','Profession'],['JobProfile','Job profile'],['Address','Address'],['City','City'],['State','State'],['Country','Country'],['Pin','Pin'],['Telephone','Telephone'],['Email','Email'],['ImageFile','Photo file'],['Comments','Comments']];
 const DATES=['DateOfBirth','DateOfDeath','DateOfMarriage'];
-let relMode=false,rA=null,rB=null,doc=null,sel=null,edit=false,files={},open=new Set(),q='',byId=new Map();
+let mi=0,relMode=false,rA=null,rB=null,doc=null,sel=null,edit=false,files={},open=new Set(),q='',byId=new Map();
 const $=s=>document.getElementById(s),esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const T=e=>[...e.children].filter(c=>c.tagName==='Tree'),f=(e,t)=>[...e.children].find(c=>c.tagName===t);
 const v=(e,t)=>(f(e,t)?.textContent||'').trim(),id=e=>v(e,'Id');
@@ -94,10 +94,14 @@ return `<button class="${e===cur?'on':''}" style="background:${i.getAttribute('C
 function jump(i){pick(i,1);document.querySelector('.n.sel')?.scrollIntoView({block:'center',behavior:'smooth'})}
 function render(){renderBar();renderTree();detail()}
 function tog(i){open.has(i)?open.delete(i):open.add(i);renderTree()}
-function pick(i,clr){sel=i;edit=false;relMode=false;if(clr){q='';$('q').value='';let p=par(byId.get(i));while(p){open.add(id(p));p=par(p)}}render()}
+function pick(i,clr){sel=i;edit=false;relMode=false;mi=0;if(clr){q='';$('q').value='';let p=par(byId.get(i));while(p){open.add(id(p));p=par(p)}}render()}
 const lk=e=>e?`<a class="l" onclick="pick('${id(e)}')">${esc(v(e,'Name'))}</a>`:'—';
 function resolve(p){const n='/'+p.replace(/[\\\/]+/g,'/').toLowerCase();const k=Object.keys(files).find(k=>n.endsWith('/'+k));if(k)return files[k];
 const s=p.trim().replace(/\\/g,'/');if(/^https?:/i.test(s))return s;if(/^([a-z]:|\/)/i.test(s))return 'media/'+encodeURIComponent(s.split('/').pop());return (s.startsWith('media/')?s:'media/'+s).split('/').map(encodeURIComponent).join('/')}
+const mlab=m=>{let f=m.file.trim(),h='';if(/^https?:\/\//i.test(f)){try{h=new URL(f).hostname.replace(/^www\./,'')}catch(x){}}return esc(m.caption||h||f.split(/[\\/]/).pop()||'Untitled')+(m.pub?'':' 🔒')};
+function mediaPick(M){if(!M.length)return'';if(mi>=M.length)mi=0;const G=[['photo','📷 Photos'],['audio','🎧 Audio'],['video','🎬 Video'],['text','📄 Other']],g=m=>['photo','audio','video'].includes(m.type)?m.type:'text';
+const sel_=M.length>1?`<div class="mut" style="margin-top:12px">Media (${M.length})</div><select style="width:100%;margin:4px 0" onchange="mi=+this.value;detail()">${G.map(([k,l])=>{const o=M.map((m,i)=>[m,i]).filter(([m])=>g(m)===k);return o.length?`<optgroup label="${l}">${o.map(([m,i])=>`<option value="${i}" ${i===mi?'selected':''}>${mlab(m)}</option>`).join('')}</optgroup>`:''}).join('')}</select>`:'';
+const c=M[mi];return sel_+`<div class="m"><div class="mut">${M.length>1?'':esc(c.caption||c.file)}${c.pub?'':' 🔒 hidden from public'}</div><div id="mv"></div></div>`}
 function embed(m){let u=m.file.trim(),x;const fr=(src,r)=>`<iframe src="${src}" allowfullscreen loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" style="width:100%;aspect-ratio:${r||'16/9'};border:0;border-radius:6px"></iframe>`;
 const lnk=`<div style="font-size:13px"><a class="l" href="${esc(u)}" target="_blank" rel="noopener">Open original ↗</a></div>`;
 if(x=u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i))return fr('https://www.youtube.com/embed/'+x[1])+lnk;
@@ -120,9 +124,9 @@ el.innerHTML=`<div class="panel"><div class="mut" style="font-size:13px">${path.
 <div class="mut">${hn?esc(hn)+' · ':''}${isP(e)?'Spouse of '+lk(par(e)):'Branch '+esc(v(e,'Branch'))}</div>
 <dl>${fields(e).slice(1).filter(([t])=>t!=='ImageFile'&&v(e,t)&&!(ro()&&PRIV.includes(t))).map(([t,l])=>`<dt>${l}</dt><dd>${esc(dsh(t,v(e,t)))}</dd>`).join('')}
 ${isP(e)?'':`<dt>Parent</dt><dd>${lk(par(e))}</dd><dt>Spouse</dt><dd>${partners(e).map(lk).join(', ')||'—'}</dd><dt>Children</dt><dd>${T(e).map(lk).join(', ')||'—'}</dd>`}</dl>
-${M.map((m,i)=>`<div class="m"><div class="mut">${esc(m.caption||m.file)}${m.pub?'':' 🔒 hidden from public'}</div><div id="m${i}"></div></div>`).join('')}
+${mediaPick(M)}
 <p><button onclick="openRel('${id(e)}')">🔗 How are we related?</button></p><div class="ed" style="margin-top:8px"><button onclick="edit=true;detail()">Edit</button> ${isP(e)?'':'<button onclick="addKid()">+ Add child</button> <button onclick="addPartner()">+ Add spouse</button>'} <button onclick="del()">Delete</button></div></div>`;
-M.forEach((m,i)=>{const t=$('m'+i);if(/^https?:\/\//i.test(m.file.trim())){t.innerHTML=embed(m);return}const u=resolve(m.file);if(!u){t.innerHTML=`<span class="warn">File not found: ${esc(m.file)} — use “Link media folder”.</span>`;return}
+[M[mi]].filter(Boolean).forEach(m=>{const t=$('mv');if(/^https?:\/\//i.test(m.file.trim())){t.innerHTML=embed(m);return}const u=resolve(m.file);if(!u){t.innerHTML=`<span class="warn">File not found: ${esc(m.file)} — use “Link media folder”.</span>`;return}
 if(m.type==='photo')t.innerHTML=`<img src="${u}" onerror="bad(this)">`;else if(m.type==='audio')t.innerHTML=`<audio controls onerror="bad(this)" src="${u}"></audio>`;
 else if(m.type==='video')t.innerHTML=`<video controls onerror="bad(this)" src="${u}"></video>`;else fetch(u).then(r=>r.ok?r.text():Promise.reject()).then(x=>t.innerHTML=`<pre>${esc(x)}</pre>`).catch(()=>t.innerHTML='<span class="warn">Media file not found on the site.</span>')})}
 function form(e,el){const ms=[...e.children].filter(c=>c.tagName==='Media');
