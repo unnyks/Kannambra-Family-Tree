@@ -12,9 +12,11 @@ h1{font-size:20px;margin:0 auto 0 0}
 button,select,input,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--ln);border-radius:6px;padding:5px 10px}
 button{cursor:pointer}button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
 main{display:flex;flex-wrap:wrap;gap:16px;padding:16px;align-items:flex-start}
-#left{flex:0 1 580px;min-width:0;overflow-x:auto}#det{flex:1 1 320px;min-width:0;position:sticky;top:120px;max-height:calc(100vh - 130px);overflow:auto}
+#left{flex:0 1 580px;min-width:0;overflow-x:auto}#det{flex:1 1 320px;min-width:0;position:sticky;top:calc(var(--hh,120px) + 10px);max-height:calc(100vh - var(--hh,120px) - 20px);overflow:auto}
 @media(max-width:760px){#left{flex-basis:100%}#det{position:static;max-height:none}}
-#q{width:100%;margin-bottom:10px}#bar{display:flex;flex-wrap:wrap;gap:6px}#bar button{color:#2b2a28;font-weight:600;border-color:transparent;padding:6px 12px}#bar button.on{outline:2px solid var(--acc);outline-offset:1px}#bar small{font-weight:400}
+@media(max-width:760px){header{padding:6px 12px;gap:6px}h1{font-size:17px;order:1}h1 .mut{display:none}header>button[onclick^="openRel"]{order:2;padding:4px 10px}
+#bar{order:3;flex:1 1 100%;flex-wrap:nowrap!important;overflow-x:auto}#bar button{white-space:nowrap;flex:0 0 auto;padding:4px 10px!important;font-size:13px}#q{max-width:none}}
+#q{order:9;flex:1 1 100%;max-width:580px}#bar{display:flex;flex-wrap:wrap;gap:6px}#bar button{color:#2b2a28;font-weight:600;border-color:transparent;padding:6px 12px}#bar button.on{outline:2px solid var(--acc);outline-offset:1px}#bar small{font-weight:400}
 ul.t{list-style:none;margin:0;padding:0}ul.t ul{list-style:none;margin:0 0 0 9px;padding-left:24px}
 ul.t li{position:relative;padding:4px 0}
 ul.t ul>li::before{content:'';position:absolute;left:-15px;top:25px;width:15px;border-top:2px solid var(--ln)}
@@ -22,7 +24,7 @@ ul.t ul>li::after{content:'';position:absolute;left:-15px;top:0;bottom:0;border-
 ul.t ul>li:last-child::after{bottom:auto;height:26px}
 .r{display:flex;align-items:center;gap:4px}.tg{width:18px;text-align:center;cursor:pointer;color:var(--mut);user-select:none}
 .n{background:var(--card);border:1px solid var(--ln);border-left-width:5px;border-radius:8px;padding:4px 10px;cursor:pointer;min-width:0}
-.n.c{color:#2b2a28}.n.c span{color:#5a554d}.n{scroll-margin-top:140px;scroll-margin-bottom:20px}.n.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}.n b{font-weight:600}.n span{display:block;color:var(--mut);font-size:12px}
+.n.c{color:#2b2a28}.n.c span{color:#5a554d}.n{scroll-margin-top:calc(var(--hh,120px) + 24px);scroll-margin-bottom:20px}.n.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}.n b{font-weight:600}.n span{display:block;color:var(--mut);font-size:12px}
 .panel{background:var(--card);border:1px solid var(--ln);border-radius:10px;padding:14px}
 .panel h2{margin:0}.mut{color:var(--mut)}a.l{color:var(--acc);cursor:pointer;text-decoration:underline}
 dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:10px 0}dt{color:var(--mut);font-size:13px}dd{margin:0;white-space:pre-wrap}
@@ -38,6 +40,7 @@ label{display:block;margin-top:8px;font-size:13px;color:var(--mut)}label>*{displ
 </style></head><body>
 <header><h1>🌳 Family Tree <span class="mut" id="cnt" style="font-size:13px"></span></h1>
 <div id="bar"></div>
+<input id="q" placeholder="Search name, nickname, place…" oninput="q=this.value;renderTree()">
 <button onclick="openRel()">🔗 Relationship</button>
 <button class="ed" onclick="mediaIn.click()" title="Pick the folder holding photos, audio, video, text">Link media folder</button>
 <button class="ed" onclick="xmlIn.click()">Open XML</button>
@@ -46,7 +49,7 @@ label{display:block;margin-top:8px;font-size:13px;color:var(--mut)}label>*{displ
 <input id="xmlIn" type="file" accept=".xml" hidden><input id="mediaIn" type="file" webkitdirectory multiple hidden>
 </header>
 <div class="ed" id="note" style="padding:8px 16px;background:var(--card);border-bottom:1px solid var(--ln);font-size:13px">Editing mode. The page loaded the <b>public</b> copy, so private items are missing. Click <b>Open XML</b> to load your full file. <b>Save public XML</b> makes the <code>tree.xml</code> to upload to GitHub (private media and phone, email, address, pin removed). Keep the full file to yourself.</div>
-<main><div id="left"><input id="q" placeholder="Search name, spouse, place…" oninput="q=this.value;renderTree()"><div id="tree"></div></div><div id="det"></div></main>
+<main><div id="left"><div id="tree"></div></div><div id="det"></div></main>
 <script>
 const FIELDS=[['Name','Name'],['NickName','Nickname'],['Gender','Gender'],['Spouse','Spouse'],['DateOfBirth','Born'],['DateOfDeath','Died'],['DateOfMarriage','Married'],['Education','Education'],['Profession','Profession'],['JobProfile','Job profile'],['Address','Address'],['City','City'],['State','State'],['Country','Country'],['Pin','Pin'],['Telephone','Telephone'],['Email','Email'],['ImageFile','Photo file'],['Comments','Comments']];
 const DATES=['DateOfBirth','DateOfDeath','DateOfMarriage'];
@@ -211,6 +214,7 @@ el.innerHTML=`<div class="res">${head}${r.dA&&r.dB?`<div class="mut" style="font
 $('xmlIn').onchange=e=>e.target.files[0]?.text().then(x=>{load(x);$('note').style.display='none'});
 $('mediaIn').onchange=e=>{[...e.target.files].forEach(fl=>{const rel=(fl.webkitRelativePath||fl.name).toLowerCase().split('/').slice(1).join('/');const u=URL.createObjectURL(fl);files[fl.name.toLowerCase()]=u;if(rel)files[rel]=u});detail()};
 if(!new URLSearchParams(location.search).has('edit'))document.body.classList.add('ro');
+new ResizeObserver(()=>document.documentElement.style.setProperty('--hh',document.querySelector('header').offsetHeight+'px')).observe(document.querySelector('header'));
 renderTree();
 fetch('tree.xml').then(r=>r.ok?r.text():Promise.reject()).then(load).catch(()=>{$('tree').innerHTML='<p class="mut">Could not load tree.xml.</p>'});
 </script></body></html>
