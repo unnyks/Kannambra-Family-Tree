@@ -964,9 +964,9 @@
                 <Tree>
                   <Branch>0102030101020404</Branch>
                   <Name>Sankaran Unni</Name>
-                  <NickName>unni</NickName>
+                  <NickName>unni, unnumidukkan</NickName>
                   <Gender>M</Gender>
-                  <DateOfBirth/>
+                  <DateOfBirth>1952</DateOfBirth>
                   <DateOfDeath/>
                   <DateOfMarriage/>
                   <Spouse/>
@@ -3457,12 +3457,12 @@ Vadekke Pathayappura thavazhi begins</Comments>
                 <Partner><Name>K.P.SreekumaranUnni Nair</Name><Id>21cfe042-e83f-4839-9a65-678a1ce880c6-p1</Id></Partner><Tree>
                   <Branch>0102030204020101</Branch>
                   <Name>Nalini</Name>
-                  <Spouse>Eswaravhandran</Spouse>
+                  <Spouse>Eswarachandran</Spouse>
                   <Gender>F</Gender>
                   <ImageFile/>
                   <Id>efebf8a9-df80-4690-9a56-e4b3d7a8d23a</Id>
                   <ParentId>21cfe042-e83f-4839-9a65-678a1ce880c6</ParentId>
-                  <Partner><Name>Eswaravhandran</Name><Id>efebf8a9-df80-4690-9a56-e4b3d7a8d23a-p1</Id></Partner><Tree>
+                  <Partner><Name>Eswarachandran</Name><Id>efebf8a9-df80-4690-9a56-e4b3d7a8d23a-p1</Id></Partner><Tree>
                     <Branch>010203020402010101</Branch>
                     <Name>Deepti</Name>
                     <Spouse>Gopi Menon</Spouse>
