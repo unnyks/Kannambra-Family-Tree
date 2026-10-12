@@ -325,7 +325,7 @@
               <DateOfDeath/>
               <DateOfMarriage/>
               <Spouse/>
-              <ImageFile>D:/Unni/JavaApplications/NetBeans/FTree/Data/Kannambra tree latest_files/image006.png</ImageFile>
+              <ImageFile>PuthanPathayappuraMuthassi.jpg</ImageFile>
               <Address/>
               <City>Trissoor</City>
               <Pin/>
@@ -1587,7 +1587,7 @@
               <DateOfDeath/>
               <DateOfMarriage/>
               <Spouse/>
-              <ImageFile>D:/Unni/JavaApplications/NetBeans/FTree/Data/Kannambra tree latest_files/image008.png</ImageFile>
+              <ImageFile>ThekkePathayappuraMuthassi.jpg</ImageFile>
               <Address/>
               <City/>
               <Pin/>
@@ -2208,7 +2208,7 @@
               <Email/>
               <JobProfile/>
               <Pin/>
-              <ImageFile/>
+              <ImageFile>NalutekkuMuthassi.jpg</ImageFile>
               <NickName/>
               <Profession/>
               <Comments>Nalukettu thavazhi begins</Comments>
@@ -4198,7 +4198,7 @@ Vadekke Pathayappura thavazhi begins</Comments>
             <Branch>0102030302</Branch>
             <Name>Kunhikkavu Amma Nethyar</Name>
             <Gender>F</Gender>
-            <ImageFile/>
+            <ImageFile>BanglavuMuthassi.jpg</ImageFile>
             <Id>10ee9d04-48d1-4322-934b-059e5cb6cb49</Id>
             <ParentId>0188fe06-195f-451d-90cd-598651846b97</ParentId>
             <Tree>
@@ -4241,7 +4241,7 @@ Vadekke Pathayappura thavazhi begins</Comments>
         <Tree>
           <Branch>01020304</Branch>
           <Name>Krishnan Unni Nair</Name>
-          <Spouse/>
+          <Spouse>Ammukutty Vayankaramma</Spouse>
           <Gender>M</Gender>
           <Education/>
           <City/>
@@ -4256,7 +4256,7 @@ Vadekke Pathayappura thavazhi begins</Comments>
           <Profession/>
           <Id>445ebf3f-13f3-442c-92fc-f41133315bb9</Id>
           <ParentId>2e6535d7-ba9b-42ac-8a50-db9563d6663e</ParentId>
-        </Tree>
+        <Partner><Name>Ammukutty Vayankaramma</Name><Id>445ebf3f-13f3-442c-92fc-f41133315bb9-pmv5aq3r7zsw</Id><NickName>Manakkampattu Muthassi</NickName><ImageFile>AmmukuttyVayankaramma.jpg</ImageFile></Partner></Tree>
       </Tree>
       <Tree>
         <Branch>010204</Branch>
