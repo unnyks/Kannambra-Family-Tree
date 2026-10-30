@@ -131,7 +131,7 @@ el.innerHTML=`${flash?`<div class="res" style="margin:0 0 10px">${flash}</div>`:
 <dl>${fields(e).slice(1).filter(([t])=>t!=='ImageFile'&&v(e,t)&&!(ro()&&PRIV.includes(t))).map(([t,l])=>`<dt>${l}</dt><dd>${esc(dsh(t,v(e,t)))}</dd>`).join('')}
 ${isP(e)?'':`<dt>Parent</dt><dd>${lk(par(e))}</dd><dt>Spouse</dt><dd>${partners(e).map(lk).join(', ')||'—'}</dd><dt>Children</dt><dd>${T(e).map(lk).join(', ')||'—'}</dd>`}</dl>
 ${mediaPick(M)}
-<p><button onclick="openRel('${id(e)}')">🔗 How are we related?</button> <button onclick="openSug('form','${id(e)}')">✍️ Suggest an addition</button></p><div class="ed" style="margin-top:8px"><button onclick="edit=true;detail()">Edit</button> ${isP(e)?'':'<button onclick="addKid()">+ Add child</button> <button onclick="addPartner()">+ Add spouse</button>'} <button onclick="del()">Delete</button></div></div>`;
+<p><button onclick="openRel('${id(e)}')">🔗 How are we related?</button> <button onclick="openSug('form','${id(e)}')">✍️ Suggest an addition</button></p><div class="ed" style="margin-top:8px"><button onclick="edit=true;detail()">Edit</button> ${!isP(e)&&par(e)?'<button onclick="mv(-1)">↑ Move up</button> <button onclick="mv(1)">↓ Move down</button> ':''}${isP(e)?'':'<button onclick="addKid()">+ Add child</button> <button onclick="addPartner()">+ Add spouse</button>'} <button onclick="del()">Delete</button></div></div>`;
 [M[mi]].filter(Boolean).forEach(m=>{const t=$('mv');if(/^https?:\/\//i.test(m.file.trim())){t.innerHTML=embed(m);return}const u=resolve(m.file);if(!u){t.innerHTML=`<span class="warn">File not found: ${esc(m.file)} — use “Link media folder”.</span>`;return}
 if(m.type==='photo')t.innerHTML=`<img src="${u}" onerror="bad(this)">`;else if(m.type==='audio')t.innerHTML=`<audio controls onerror="bad(this)" src="${u}"></audio>`;
 else if(m.type==='video')t.innerHTML=`<video controls onerror="bad(this)" src="${u}"></video>`;else fetch(u).then(r=>r.ok?r.text():Promise.reject()).then(x=>t.innerHTML=`<pre>${esc(x)}</pre>`).catch(()=>t.innerHTML='<span class="warn">Media file not found on the site.</span>')})}
@@ -152,6 +152,11 @@ const k=T(e)[0];k?e.insertBefore(m,k):e.appendChild(m);detail()}
 function addM(inp){const fl=inp.files[0];if(!fl)return;saveForm();const e=byId.get(sel);files[fl.name.toLowerCase()]=URL.createObjectURL(fl);
 const m=doc.createElement('Media');m.setAttribute('type',fl.type.startsWith('image')?'photo':fl.type.startsWith('audio')?'audio':fl.type.startsWith('video')?'video':'text');m.setAttribute('file',fl.name);m.setAttribute('caption','');m.setAttribute('public','no');
 const k=T(e)[0];k?e.insertBefore(m,k):e.appendChild(m);detail()}
+function mv(d){const e=byId.get(sel),p=e&&par(e);if(!p)return;const s=T(p),i=s.indexOf(e),o=s[i+d];if(!o)return;
+const ce=v(e,'Branch'),co=v(o,'Branch'),fix=[];
+if(ce&&co&&ce.length===co.length){const re=[e,...e.querySelectorAll('Tree')],ro=[o,...o.querySelectorAll('Tree')];
+if(re.every(x=>v(x,'Branch').startsWith(ce))&&ro.every(x=>v(x,'Branch').startsWith(co))){re.forEach(x=>fix.push([x,co+v(x,'Branch').slice(ce.length)]));ro.forEach(x=>fix.push([x,ce+v(x,'Branch').slice(co.length)]))}}
+d<0?p.insertBefore(e,o):p.insertBefore(o,e);fix.forEach(([x,c])=>setF(x,'Branch',c));index();render();document.querySelector('.n.sel')?.scrollIntoView({block:'center',behavior:'smooth'})}
 function addPartner(){const p=byId.get(sel),n=addPartnerEl(p,'New spouse');syncSpouse(p);open.add(id(p));index();sel=id(n);edit=true;render()}
 function addKid(){const p=byId.get(sel),n=doc.createElement('Tree'),mk=(t,x)=>{const c=doc.createElement(t);c.textContent=x;n.appendChild(c)};
 mk('Branch',v(p,'Branch')+String(T(p).length+1).padStart(2,'0'));mk('Name','New person');mk('Id',crypto.randomUUID());mk('ParentId',id(p));p.appendChild(n);
@@ -215,7 +220,7 @@ const gn=n=>n+' generation'+(n>1?'s':'');
 el.innerHTML=`<div class="res">${head}${r.dA&&r.dB?`<div class="mut" style="font-size:13px;margin-top:4px">Common ancestor: ${esc(v(r.L,'Name'))}. ${esc(v(a0,'Name'))} is ${gn(r.dA)} below, ${esc(v(b0,'Name'))} is ${gn(r.dB)} below.</div>`:''}</div><div class="rd">${dia}</div>`}
 // ---- contributions via WhatsApp ----
 const WA_NUMBER=''; // set to country code + number, no + or spaces, e.g. '919XXXXXXXXX'. Empty = contributor chooses the contact in WhatsApp.
-const WA_GROUP_NAME='Kannambra family tree',WA_GROUP_LINK='https://chat.whatsapp.com/C7Kq6lnYDWq1B08ZBPs8dz'; // group name shown as a hint when sending; optional invite link (https://chat.whatsapp.com/...)
+const WA_GROUP_NAME='',WA_GROUP_LINK=''; // group name shown as a hint when sending; optional invite link (https://chat.whatsapp.com/...)
 let sm='',sugT=null,flash='',imp=[],sugg=[],lastMsgs=[];
 try{sugg=JSON.parse(localStorage.getItem('kft_sugg')||'[]')}catch(x){}
 const gv=k=>{try{return localStorage.getItem(k)||''}catch(x){return''}},sk=(k,x)=>{try{localStorage.setItem(k,x)}catch(e){}};
