@@ -14,7 +14,7 @@ button{cursor:pointer}button.p{background:var(--acc);color:#fff;border-color:var
 main{display:flex;flex-wrap:wrap;gap:16px;padding:16px;align-items:flex-start}
 #left{flex:0 1 580px;min-width:0;overflow-x:auto}#det{flex:1 1 320px;min-width:0;position:sticky;top:calc(var(--hh,120px) + 10px);max-height:calc(100vh - var(--hh,120px) - 20px);overflow:auto}
 @media(max-width:760px){#left{flex-basis:100%}#det{position:static;max-height:none}}
-@media(max-width:760px){header{padding:6px 12px;gap:6px}h1{font-size:17px;order:1}h1 .mut{display:none}header>button[onclick^="openRel"],#sugBtn{order:2;padding:4px 10px}
+@media(max-width:760px){header{padding:6px 12px;gap:6px}h1{font-size:17px;order:1}h1 .mut{display:none}header>button[onclick^="openRel"],#sugBtn,#archBtn{order:2;padding:4px 10px}
 #bar{order:3;flex:1 1 100%;flex-wrap:nowrap!important;overflow-x:auto}#bar button{white-space:nowrap;flex:0 0 auto;padding:4px 10px!important;font-size:13px}#q{max-width:none}}
 #q{order:9;flex:1 1 100%;max-width:580px}#bar{display:flex;flex-wrap:wrap;gap:6px}#bar button{color:#2b2a28;font-weight:600;border-color:transparent;padding:6px 12px}#bar button.on{outline:2px solid var(--acc);outline-offset:1px}#bar small{font-weight:400}
 ul.t{list-style:none;margin:0;padding:0}ul.t ul{list-style:none;margin:0 0 0 9px;padding-left:24px}
@@ -36,12 +36,18 @@ label{display:block;margin-top:8px;font-size:13px;color:var(--mut)}label>*{displ
 .cols::before{content:'';position:absolute;top:0;left:25%;right:25%;border-top:2px solid var(--ln)}.col{display:flex;flex-direction:column;align-items:center;min-width:0}
 .n .tg2{display:inline-block;background:var(--acc);color:#fff;border-radius:10px;padding:0 8px;font-size:11px;margin:2px 0 0 6px}
 .res{background:var(--bg);border-radius:8px;padding:8px 12px;margin:10px 0}
-.r{flex-wrap:wrap}.cp{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}.pp{display:inline-flex;align-items:center;gap:4px}.mar{color:var(--mut);font-style:normal}.warn{color:#b3541e;font-size:13px}.sr{padding:6px 8px;border-bottom:1px solid var(--ln);cursor:pointer}
+.r{flex-wrap:wrap}.cp{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}.pp{display:inline-flex;align-items:center;gap:4px}.mar{color:var(--mut);font-style:normal}#arch{display:none;padding:16px;max-width:1100px;margin:0 auto}body.arch main,body.arch #note{display:none}body.arch #arch{display:block}
+.ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px}.ac{background:var(--card);border:1px solid var(--ln);border-radius:10px;overflow:hidden;cursor:pointer}
+.ac .th{height:120px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:38px;overflow:hidden}.ac .th img{width:100%;height:100%;object-fit:cover}
+.ac .bd{padding:8px 10px}.ac b{display:block}.ac .mut{font-size:12px}.chip{display:inline-block;padding:3px 10px;border:1px solid var(--ln);border-radius:14px;margin:0 6px 6px 0;cursor:pointer;background:var(--card);font-size:13px}.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.story{white-space:pre-wrap;line-height:1.7;background:var(--bg);padding:12px 14px;border-radius:8px;margin:10px 0}
+.warn{color:#b3541e;font-size:13px}.sr{padding:6px 8px;border-bottom:1px solid var(--ln);cursor:pointer}
 </style></head><body>
 <header><h1>🌳 Family Tree <span class="mut" id="cnt" style="font-size:13px"></span></h1>
 <div id="bar"></div>
-<input id="q" placeholder="Search name, nickname, place…" oninput="q=this.value;renderTree()">
+<input id="q" placeholder="Search name, nickname, place…" oninput="q=this.value;hideArch();renderTree()">
 <button onclick="openRel()">🔗 Relationship</button>
+<button id="archBtn" onclick="showArch()">📚 Family archive</button>
 <button id="sugBtn" onclick="openSug('list')" style="display:none">✍️ My suggestions (0)</button>
 <button class="ed" onclick="openSug('import')">Import suggestions</button>
 <button class="ed" onclick="mediaIn.click()" title="Pick the folder holding photos, audio, video, text">Link media folder</button>
@@ -52,6 +58,7 @@ label{display:block;margin-top:8px;font-size:13px;color:var(--mut)}label>*{displ
 </header>
 <div class="ed" id="note" style="padding:8px 16px;background:var(--card);border-bottom:1px solid var(--ln);font-size:13px">Editing mode. The page loaded the <b>public</b> copy, so private items are missing. Click <b>Open XML</b> to load your full file. <b>Save public XML</b> makes the <code>tree.xml</code> to upload to GitHub (private media and phone, email, address, pin removed). Keep the full file to yourself.</div>
 <main><div id="left"><div id="tree"></div></div><div id="det"></div></main>
+<div id="arch"></div>
 <script>
 const FIELDS=[['Name','Name'],['NickName','Nickname'],['Gender','Gender'],['Spouse','Spouse'],['DateOfBirth','Born'],['DateOfDeath','Died'],['DateOfMarriage','Married'],['Education','Education'],['Profession','Profession'],['JobProfile','Job profile'],['Address','Address'],['City','City'],['State','State'],['Country','Country'],['Pin','Pin'],['Telephone','Telephone'],['Email','Email'],['ImageFile','Photo file'],['Comments','Comments']];
 const DATES=['DateOfBirth','DateOfDeath','DateOfMarriage'];
@@ -78,7 +85,7 @@ doc=d;convertSpouses();index();if(!byId.size){$('tree').innerHTML='<p class="mut
 function index(){byId=new Map();doc.querySelectorAll('Tree,Partner').forEach(e=>byId.set(id(e),e));const a=[...byId.values()],np=a.filter(isP).length;$('cnt').textContent=(a.length-np)+' people'+(np?' · '+np+' spouses':'')}
 const PRIV=['Telephone','Email','Address','Pin'],ro=()=>document.body.classList.contains('ro');
 function xmlOut(mode){const d=doc.cloneNode(true);if(mode==='public'){d.querySelectorAll('Media').forEach(m=>{if(m.getAttribute('public')==='no')m.remove()});
-d.querySelectorAll(PRIV.join(',')).forEach(x=>x.textContent='')}return '<?xml version="1.0" encoding="utf-8"?>'+new XMLSerializer().serializeToString(d)}
+d.querySelectorAll(PRIV.join(',')).forEach(x=>x.textContent='');d.querySelectorAll('Library > Item').forEach(i=>{if([...i.children].find(c=>c.tagName==='Public')?.textContent.trim()==='no')i.remove()})}return '<?xml version="1.0" encoding="utf-8"?>'+new XMLSerializer().serializeToString(d)}
 function saveXml(mode){if(!doc)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([xmlOut(mode)],{type:'text/xml'}));a.download=mode==='public'?'tree.xml':'KFTree_full.xml';a.click()}
 function house(e){let c=e;while(c){const i=f(c,'Id');if(i?.getAttribute('Color'))return i.getAttribute('Color');c=par(c)}return'var(--ln)'}
 function houseName(e){let c=e;while(c){const i=f(c,'Id');if(i?.getAttribute('Name'))return i.getAttribute('Name');c=par(c)}return''}
@@ -98,9 +105,9 @@ function renderBar(){if(!doc){$('bar').innerHTML='';return}const cur=sel&&byId.g
 $('bar').innerHTML=[...doc.querySelectorAll('Id')].filter(i=>i.getAttribute('Color')).map(i=>{const e=i.parentElement;
 return `<button class="${e===cur?'on':''}" style="background:${i.getAttribute('Color')}" title="Go to ${esc(v(e,'Name'))}" onclick="jump('${id(e)}')">${esc(i.getAttribute('Name')||v(e,'Name'))} <small>(${e.querySelectorAll('Tree').length+1})</small></button>`}).join('')}
 function jump(i){pick(i,1);document.querySelector('.n.sel')?.scrollIntoView({block:'center',behavior:'smooth'})}
-function render(){renderBar();renderTree();detail();updSug()}
+function render(){renderBar();renderTree();detail();updSug();updArch()}
 function tog(i){open.has(i)?open.delete(i):open.add(i);renderTree()}
-function pick(i,clr){sel=i;edit=false;relMode=false;mi=0;sm='';if(clr){q='';$('q').value=''}let p=par(byId.get(i));while(p){open.add(id(p));p=par(p)}render();document.querySelector('.n.sel')?.scrollIntoView({block:clr?'center':'nearest',behavior:'smooth'})}
+function pick(i,clr){sel=i;edit=false;relMode=false;mi=0;sm='';document.body.classList.remove('arch');if(clr){q='';$('q').value=''}let p=par(byId.get(i));while(p){open.add(id(p));p=par(p)}render();document.querySelector('.n.sel')?.scrollIntoView({block:clr?'center':'nearest',behavior:'smooth'})}
 const lk=e=>e?`<a class="l" onclick="pick('${id(e)}')">${esc(v(e,'Name'))}</a>`:'—';
 function resolve(p){const n='/'+p.replace(/[\\\/]+/g,'/').toLowerCase();const k=Object.keys(files).find(k=>n.endsWith('/'+k));if(k)return files[k];
 const s=p.trim().replace(/\\/g,'/');if(/^https?:/i.test(s))return s;if(/^([a-z]:|\/)/i.test(s))return 'media/'+encodeURIComponent(s.split('/').pop());return (s.startsWith('media/')?s:'media/'+s).split('/').map(encodeURIComponent).join('/')}
@@ -113,6 +120,7 @@ const lnk=`<div style="font-size:13px"><a class="l" href="${esc(u)}" target="_bl
 if(x=u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i))return fr('https://www.youtube.com/embed/'+x[1])+lnk;
 if(x=u.match(/vimeo\.com\/(?:video\/)?(\d+)/i))return fr('https://player.vimeo.com/video/'+x[1])+lnk;
 if(x=u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([\w-]+)/i))return fr('https://drive.google.com/file/d/'+x[1]+'/preview','4/3')+lnk;
+if(/\.pdf(\?|#|$)/i.test(u))return fr(esc(u),'3/4')+lnk;
 if(/dropbox\.com/i.test(u))u=u.replace(/([?&])dl=0/,'$1raw=1');
 const a=esc(u);let t=/\.(jpe?g|png|gif|webp|svg|avif)(\?|#|$)/i.test(u)?'photo':/\.(mp3|m4a|wav|ogg|aac|flac)(\?|#|$)/i.test(u)?'audio':/\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(u)?'video':'';
 if(!t&&/photos\.app\.goo\.gl|photos\.google|facebook\.com|instagram\.com|onedrive|1drv\.ms|icloud/i.test(u))return `<a class="l" href="${a}" target="_blank" rel="noopener">Open on ${esc(new URL(u).hostname.replace(/^www\./,''))} ↗</a>`;
@@ -130,7 +138,7 @@ el.innerHTML=`${flash?`<div class="res" style="margin:0 0 10px">${flash}</div>`:
 <div class="mut">${hn?esc(hn)+' · ':''}${isP(e)?'Spouse of '+lk(par(e)):'Branch '+esc(v(e,'Branch'))}</div>
 <dl>${fields(e).slice(1).filter(([t])=>t!=='ImageFile'&&v(e,t)&&!(ro()&&PRIV.includes(t))).map(([t,l])=>`<dt>${l}</dt><dd>${esc(dsh(t,v(e,t)))}</dd>`).join('')}
 ${isP(e)?'':`<dt>Parent</dt><dd>${lk(par(e))}</dd><dt>Spouse</dt><dd>${partners(e).map(lk).join(', ')||'—'}</dd><dt>Children</dt><dd>${T(e).map(lk).join(', ')||'—'}</dd>`}</dl>
-${mediaPick(M)}
+${mediaPick(M)}${archFor(e)}
 <p><button onclick="openRel('${id(e)}')">🔗 How are we related?</button> <button onclick="openSug('form','${id(e)}')">✍️ Suggest an addition</button></p><div class="ed" style="margin-top:8px"><button onclick="edit=true;detail()">Edit</button> ${!isP(e)&&par(e)?'<button onclick="mv(-1)">↑ Move up</button> <button onclick="mv(1)">↓ Move down</button> ':''}${isP(e)?'':'<button onclick="addKid()">+ Add child</button> <button onclick="addPartner()">+ Add spouse</button>'} <button onclick="del()">Delete</button></div></div>`;
 [M[mi]].filter(Boolean).forEach(m=>{const t=$('mv');if(/^https?:\/\//i.test(m.file.trim())){t.innerHTML=embed(m);return}const u=resolve(m.file);if(!u){t.innerHTML=`<span class="warn">File not found: ${esc(m.file)} — use “Link media folder”.</span>`;return}
 if(m.type==='photo')t.innerHTML=`<img src="${u}" onerror="bad(this)">`;else if(m.type==='audio')t.innerHTML=`<audio controls onerror="bad(this)" src="${u}"></audio>`;
@@ -290,6 +298,61 @@ function mkKid(p,name,born){const n=doc.createElement('Tree'),mk=(t,x)=>{const c
 mk('Branch',v(p,'Branch')+String(T(p).length+1).padStart(2,'0'));mk('Name',name);mk('Id',crypto.randomUUID());mk('ParentId',id(p));if(born)mk('DateOfBirth',dt(born));p.appendChild(n);return n}
 function applyImp(){const bc=byCode();let n=0;imp=imp.filter(x=>{const e=bc.get(x.code);if(x.on&&e&&x.value.trim()&&applyItem(e,x)){n++;return false}return true});index();renderTree();renderBar();
 showImp(n?`Applied ${n} change${n>1?'s':''}. Remember to click “Save full XML” now.`:'Nothing was applied.')}
+// ---- family archive (items that belong to the whole family)
+const ICON={photo:'📷',video:'🎬',audio:'🎧',document:'📄',writeup:'📝'};
+let aq='',ac='',ay='',asort='asc',ai=null,ae=null,dr=null;
+const items=()=>doc?[...doc.querySelectorAll('Library > Item')]:[],vis=()=>items().filter(it=>!ro()||v(it,'Public')!=='no'),itemBy=i=>items().find(x=>v(x,'Id')===i);
+const ppl=it=>v(it,'People').split(';').filter(x=>x&&byId.get(x));
+function updArch(){const b=$('archBtn');if(b)b.style.display=!doc?'none':(!ro()||vis().length)?'':'none'}
+function archFor(e){const l=vis().filter(it=>ppl(it).includes(id(e)));return l.length?`<div class="mut" style="margin-top:12px">In the family archive</div>${l.map(it=>`<div><a class="l" onclick="gotoItem('${v(it,'Id')}')">${ICON[v(it,'Type')]||'📄'} ${esc(v(it,'Title'))}</a></div>`).join('')}`:''}
+function gotoItem(i){showArch();openItem(i)}
+function showArch(){document.body.classList.add('arch');ai=null;ae=null;renderArch();scrollTo(0,0)}
+function hideArch(){document.body.classList.remove('arch')}
+function thumb(it){const f0=v(it,'File');if(v(it,'Type')!=='photo'||!f0)return'';if(/^https?:/i.test(f0))return /\.(jpe?g|png|gif|webp|svg|avif)(\?|#|$)/i.test(f0)?f0:'';return resolve(f0)}
+function renderArch(){const A=$('arch');if(!doc)return;if(ae!==null)return itemForm(A);if(ai)return itemView(A);
+const all=vis(),cols=[...new Set(all.map(i=>v(i,'Collection')).filter(Boolean))].sort(),yrs=[...new Set(all.map(i=>v(i,'Year')).filter(Boolean))].sort();if(ac&&!cols.includes(ac))ac='';if(ay&&!yrs.includes(ay))ay='';
+A.innerHTML=`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onclick="hideArch()">← Back to the tree</button><h2 style="margin:0 auto 0 6px">📚 Family archive</h2><button class="p ed" onclick="editItem()">+ Add item</button></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 8px"><input id="aq" style="flex:1 1 220px" placeholder="Search the archive…" value="${esc(aq)}" oninput="aq=this.value;renderGrid()">
+<select onchange="ay=this.value;renderGrid()"><option value="">All years</option>${yrs.map(y=>`<option ${y===ay?'selected':''}>${esc(y)}</option>`).join('')}</select>
+<select onchange="asort=this.value;renderGrid()"><option value="asc" ${asort==='asc'?'selected':''}>Oldest first</option><option value="desc" ${asort==='desc'?'selected':''}>Newest first</option></select></div>
+<div>${['',...cols].map(c=>`<span class="chip ${c===ac?'on':''}" onclick="ac=${JSON.stringify(c).replace(/"/g,'&quot;')};renderArch()">${c?esc(c)+' ('+all.filter(i=>v(i,'Collection')===c).length+')':'All ('+all.length+')'}</span>`).join('')}</div><div id="agrid"></div>`;renderGrid()}
+function renderGrid(){const q=toks(aq),G=$('agrid');if(!G)return;
+let l=vis().filter(it=>(!ac||v(it,'Collection')===ac)&&(!ay||v(it,'Year')===ay)&&(!q.length||(()=>{const h=toks([v(it,'Title'),v(it,'Collection'),v(it,'Description'),v(it,'Year')].join(' '));return q.every(t=>h.some(x=>tokScore(t,x)>=0))})()));
+const yr=it=>parseInt(v(it,'Year'))||(asort==='asc'?1e9:-1e9);l.sort((a,b)=>asort==='asc'?yr(a)-yr(b):yr(b)-yr(a));
+G.className='ag';G.innerHTML=l.map(it=>{const t=thumb(it),ty=v(it,'Type');return `<div class="ac" onclick="openItem('${v(it,'Id')}')"><div class="th">${t?`<img src="${esc(t)}" onerror="this.replaceWith(document.createTextNode('${ICON.photo}'))">`:ICON[ty]||'📄'}</div><div class="bd"><b>${esc(v(it,'Title'))}${v(it,'Public')==='no'?' 🔒':''}</b><span class="mut">${esc(v(it,'Year'))}${v(it,'Year')&&v(it,'Collection')?' · ':''}${esc(v(it,'Collection'))}</span></div></div>`}).join('')||'<p class="mut">Nothing here yet.</p>'}
+function openItem(i){ai=i;ae=null;renderArch();scrollTo(0,0)}
+function mediaInto(t,m){const f0=(m.file||'').trim();if(!f0){t.innerHTML='';return}if(/^https?:\/\//i.test(f0)){t.innerHTML=embed(m);return}
+const u=resolve(f0),a=esc(u),lnk=`<div style="font-size:13px"><a class="l" href="${a}" target="_blank" rel="noopener">Open original ↗</a></div>`;
+if(m.type==='photo')t.innerHTML=`<img src="${a}" onerror="bad(this)">`+lnk;else if(m.type==='audio')t.innerHTML=`<audio controls onerror="bad(this)" src="${a}"></audio>`+lnk;else if(m.type==='video')t.innerHTML=`<video controls onerror="bad(this)" src="${a}"></video>`+lnk;
+else if(/\.pdf$/i.test(f0))t.innerHTML=`<iframe src="${a}" style="width:100%;height:70vh;border:0;border-radius:6px"></iframe>`+lnk;
+else fetch(u).then(r=>r.ok?r.text():Promise.reject()).then(x=>t.innerHTML=`<pre>${esc(x)}</pre>`+lnk).catch(()=>t.innerHTML='<span class="warn">File not found on the site.</span>')}
+function itemView(A){const it=itemBy(ai);if(!it){ai=null;return renderArch()}const ty=v(it,'Type'),tx=f(it,'Text')?.textContent.trim()||'';
+A.innerHTML=`<div class="panel"><div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="ai=null;renderArch()">← Back to the archive</button><span style="flex:1"></span><span class="ed"><button onclick="editItem('${ai}')">Edit</button> <button onclick="delItem('${ai}')">Delete</button></span></div>
+<h2 style="margin:12px 0 2px">${ICON[ty]||'📄'} ${esc(v(it,'Title'))}${v(it,'Public')==='no'?' 🔒':''}</h2><div class="mut">${esc(v(it,'Year'))}${v(it,'Year')&&v(it,'Collection')?' · ':''}${esc(v(it,'Collection'))}${v(it,'Public')==='no'?' · hidden from the public':''}</div>
+${v(it,'Description')?`<p style="white-space:pre-wrap">${esc(v(it,'Description'))}</p>`:''}${tx?`<div class="story">${esc(tx)}</div>`:''}<div class="m" id="av"></div>
+${ppl(it).length?`<div class="mut">People</div><div>${ppl(it).map(p=>`<a class="l" onclick="hideArch();pick('${p}',1)">${esc(v(byId.get(p),'Name'))}</a>`).join(', ')}</div>`:''}</div>`;mediaInto($('av'),{type:ty,file:v(it,'File')})}
+function editItem(i){const it=i&&itemBy(i);dr=it?{id:i,title:v(it,'Title'),type:v(it,'Type'),collection:v(it,'Collection'),year:v(it,'Year'),description:f(it,'Description')?.textContent||'',file:v(it,'File'),text:f(it,'Text')?.textContent||'',people:ppl(it),pub:v(it,'Public')!=='no'}
+:{id:'',title:'',type:'photo',collection:ac,year:'',description:'',file:'',text:'',people:[],pub:false};ae=i||'new';renderArch()}
+function itemForm(A){const cols=[...new Set(items().map(i=>v(i,'Collection')).filter(Boolean))];
+A.innerHTML=`<div class="panel"><h2>${dr.id?'Edit item':'New archive item'}</h2>
+<label>Title<input id="a_title" value="${esc(dr.title)}"></label><label>Type<select id="a_type">${Object.keys(ICON).map(t=>`<option ${t===dr.type?'selected':''}>${t}</option>`).join('')}</select></label>
+<label>Collection<input id="a_coll" list="a_colls" value="${esc(dr.collection)}" placeholder="e.g. Festivals, Letters and documents"></label><datalist id="a_colls">${cols.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
+<label>Year (optional)<input id="a_year" value="${esc(dr.year)}"></label><label>Description<textarea id="a_desc" rows="3">${esc(dr.description)}</textarea></label>
+<label>File name in the media folder, or a link<input id="a_file" value="${esc(dr.file)}" placeholder="e.g. house1950.jpg or https://youtu.be/…"></label><button onclick="a_att.click()">Attach file…</button><input id="a_att" type="file" hidden onchange="aAtt(this)">
+<label>Write-up text (for stories and memories)<textarea id="a_text" rows="6">${esc(dr.text)}</textarea></label>
+<label>People mentioned</label><div id="ppc"></div><input id="pp" placeholder="Type a name to add…" autocomplete="off" oninput="ppSug()" style="width:100%"><div id="ppl"></div>
+<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="a_pub" style="width:auto;margin:0" ${dr.pub?'checked':''}> Show on public site</label>
+<p><button class="p" onclick="saveItem()">Save</button> <button onclick="ae=null;renderArch()">Cancel</button></p></div>`;ppChips()}
+function aAtt(inp){const fl=inp.files[0];if(!fl)return;files[fl.name.toLowerCase()]=URL.createObjectURL(fl);$('a_file').value=fl.name;const t=fl.type;
+$('a_type').value=t.startsWith('image')?'photo':t.startsWith('audio')?'audio':t.startsWith('video')?'video':/pdf/.test(t)?'document':$('a_type').value}
+function ppChips(){$('ppc').innerHTML=dr.people.map((p,i)=>`<span class="chip">${esc(v(byId.get(p),'Name'))} <a class="l" onclick="dr.people.splice(${i},1);ppChips()">✕</a></span>`).join('')}
+function ppSug(){const s=$('pp').value.trim();if(!s){$('ppl').innerHTML='';return}$('ppl').innerHTML=search(s,['Name','NickName'],[],6).map(e=>`<div class="sr" onmousedown="dr.people.push('${id(e)}');$('pp').value='';$('ppl').innerHTML='';ppChips()"><b>${esc(v(e,'Name'))}</b> <span class="mut">${ctx(e)}</span></div>`).join('')}
+function saveItem(){const g=k=>$(k).value.trim();if(!g('a_title')){alert('Please give the item a title.');return}
+let L=[...doc.documentElement.children].find(c=>c.tagName==='Library');if(!L){L=doc.createElement('Library');doc.documentElement.appendChild(L)}
+let it=dr.id&&itemBy(dr.id);if(!it){it=doc.createElement('Item');L.appendChild(it);setF(it,'Id',crypto.randomUUID())}
+setF(it,'Title',g('a_title'));setF(it,'Type',$('a_type').value);setF(it,'Collection',g('a_coll'));setF(it,'Year',g('a_year'));setF(it,'Description',$('a_desc').value.trim());setF(it,'File',g('a_file'));setF(it,'Text',$('a_text').value.trim());setF(it,'People',dr.people.join(';'));setF(it,'Public',$('a_pub').checked?'yes':'no');
+ai=v(it,'Id');ae=null;ac=ac&&v(it,'Collection')!==ac?'':ac;renderArch();updArch()}
+function delItem(i){if(!confirm('Delete this archive item?'))return;itemBy(i)?.remove();ai=null;renderArch();updArch()}
 $('xmlIn').onchange=e=>e.target.files[0]?.text().then(x=>{load(x);$('note').style.display='none'});
 $('mediaIn').onchange=e=>{[...e.target.files].forEach(fl=>{const rel=(fl.webkitRelativePath||fl.name).toLowerCase().split('/').slice(1).join('/');const u=URL.createObjectURL(fl);files[fl.name.toLowerCase()]=u;if(rel)files[rel]=u});detail()};
 if(!new URLSearchParams(location.search).has('edit'))document.body.classList.add('ro');
